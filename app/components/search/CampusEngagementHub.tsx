@@ -1,12 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Mic, X, Calendar, MapPin, Tag, BookOpen, Users, Briefcase, Coffee, Clock, Sparkles } from 'lucide-react';
-
-interface Suggestion {
-  text: string;
-  type: 'event' | 'food' | 'location' | 'academic' | 'social' | 'career' | 'query';
-}
+import { Search, Mic, X, Calendar, MapPin, Tag, BookOpen, Users, Briefcase, Coffee, Clock, Sparkles, AlertCircle } from 'lucide-react';
 
 interface Event {
   id: string;
@@ -24,9 +19,15 @@ interface Event {
   relevanceScore?: number;
 }
 
+interface Suggestion {
+  text: string;
+  type: 'event' | 'food' | 'location' | 'academic' | 'social' | 'career' | 'query';
+}
+
 const CampusEngagementHub: React.FC = () => {
   const [query, setQuery] = useState<string>('');
   const [results, setResults] = useState<Event[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isFocused, setIsFocused] = useState<boolean>(false);
@@ -49,6 +50,7 @@ const CampusEngagementHub: React.FC = () => {
     const fetchResults = async () => {
       if (query.trim() === '' && activeFilters.length === 0) {
         setResults([]);
+        setErrorMessage(null);
         return;
       }
 
@@ -62,9 +64,26 @@ const CampusEngagementHub: React.FC = () => {
 
         const response = await fetch(`/api/search-events?${params.toString()}`);
         const data = await response.json();
-        setResults(data);
+        
+        // Handle both response formats
+        if (Array.isArray(data)) {
+          // Old format: just an array of events
+          setResults(data);
+          setErrorMessage(null);
+        } else if (data.events) {
+          // New format: { events, message }
+          setResults(data.events);
+          setErrorMessage(data.message);
+        } else {
+          // Unexpected format
+          setResults([]);
+          setErrorMessage('Unable to parse search results');
+          console.error('Unexpected API response format:', data);
+        }
       } catch (error) {
         console.error('Error fetching search results:', error);
+        setResults([]);
+        setErrorMessage('Failed to fetch results. Please try again.');
       } finally {
         setIsLoading(false);
       }
@@ -227,15 +246,6 @@ const CampusEngagementHub: React.FC = () => {
     "Career workshops for engineering majors"
   ];
 
-  // Mock suggestions for demo
-  const mockSuggestions: Suggestion[] = [
-    { text: 'Pizza at Student Center', type: 'food' },
-    { text: 'CS tutoring this week', type: 'academic' },
-    { text: 'Campus Center events', type: 'location' },
-    { text: 'Career fair next week', type: 'career' },
-    { text: 'Study groups for math', type: 'academic' },
-  ];
-
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-50">
       <div className="mt-16 md:mt-24 mb-6 text-center px-4">
@@ -296,7 +306,7 @@ const CampusEngagementHub: React.FC = () => {
         </div>
 
         {/* Example queries */}
-        {!query && !results.length && (
+        {!query && !results.length && !errorMessage && (
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             {exampleQueries.map((example, index) => (
               <button
@@ -329,27 +339,24 @@ const CampusEngagementHub: React.FC = () => {
         </div>
 
         {/* Suggestions dropdown */}
-        {isFocused && query && suggestions.length === 0 && mockSuggestions.length > 0 && (
+        {isFocused && query && suggestions.length > 0 && (
           <div className="absolute mt-1 w-full max-w-3xl bg-white rounded-lg shadow-lg z-10 overflow-hidden">
             <div className="p-1">
-              {mockSuggestions
-                .filter(suggestion => 
-                  suggestion.text.toLowerCase().includes(query.toLowerCase())
-                )
-                .map((suggestion, index) => (
-                  <div 
-                    key={index}
-                    className="flex items-center px-4 py-2 hover:bg-blue-50 cursor-pointer rounded-md"
-                    onClick={() => handleSuggestionClick(suggestion)}
-                  >
-                    {suggestion.type === 'food' && <Coffee className="h-4 w-4 mr-3 text-emerald-500" />}
-                    {suggestion.type === 'academic' && <BookOpen className="h-4 w-4 mr-3 text-blue-500" />}
-                    {suggestion.type === 'career' && <Briefcase className="h-4 w-4 mr-3 text-amber-500" />}
-                    {suggestion.type === 'location' && <MapPin className="h-4 w-4 mr-3 text-green-500" />}
-                    {suggestion.type === 'query' && <Search className="h-4 w-4 mr-3 text-gray-400" />}
-                    <span>{suggestion.text}</span>
-                  </div>
-                ))}
+              {suggestions.map((suggestion, index) => (
+                <div 
+                  key={index}
+                  className="flex items-center px-4 py-2 hover:bg-blue-50 cursor-pointer rounded-md"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
+                  {suggestion.type === 'food' && <Coffee className="h-4 w-4 mr-3 text-emerald-500" />}
+                  {suggestion.type === 'academic' && <BookOpen className="h-4 w-4 mr-3 text-blue-500" />}
+                  {suggestion.type === 'career' && <Briefcase className="h-4 w-4 mr-3 text-amber-500" />}
+                  {suggestion.type === 'location' && <MapPin className="h-4 w-4 mr-3 text-green-500" />}
+                  {suggestion.type === 'query' && <Search className="h-4 w-4 mr-3 text-gray-400" />}
+                  {suggestion.type === 'social' && <Users className="h-4 w-4 mr-3 text-purple-500" />}
+                  <span>{suggestion.text}</span>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -358,6 +365,17 @@ const CampusEngagementHub: React.FC = () => {
         {isLoading && (
           <div className="mt-6 text-center">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-3 border-solid border-blue-500 border-r-transparent"></div>
+          </div>
+        )}
+
+        {/* Error message */}
+        {errorMessage && !isLoading && (
+          <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+            <div className="flex justify-center mb-3">
+              <AlertCircle className="h-6 w-6 text-amber-500" />
+            </div>
+            <p className="text-lg font-medium text-amber-800 mb-2">No Events Found</p>
+            <p className="text-sm text-amber-700">{errorMessage}</p>
           </div>
         )}
 
@@ -401,7 +419,7 @@ const CampusEngagementHub: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    {event.tags.length > 0 && (
+                    {event.tags && event.tags.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {event.tags.map((tag, index) => (
                           <span 
@@ -419,7 +437,7 @@ const CampusEngagementHub: React.FC = () => {
             ))}
           </div>
         ) : (
-          query && !isLoading && (
+          !errorMessage && !isLoading && query && (
             <div className="mt-6 text-center text-gray-500 bg-white p-8 rounded-xl shadow-md">
               <p className="text-lg mb-2">No events found</p>
               <p className="text-sm">Try searching for "tutoring", "networking", or "free food"</p>
@@ -428,7 +446,7 @@ const CampusEngagementHub: React.FC = () => {
         )}
 
         {/* Commuter-focused message */}
-        {personaType === 'commuter' && !query && !results.length && !isLoading && (
+        {personaType === 'commuter' && !query && !results.length && !isLoading && !errorMessage && (
           <div className="mt-8 bg-blue-50 border border-blue-100 rounded-lg p-4 text-center">
             <h3 className="font-medium text-blue-700 mb-1">Commuter Student?</h3>
             <p className="text-blue-600 text-sm">
