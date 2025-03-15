@@ -24,6 +24,35 @@ interface Suggestion {
   type: 'event' | 'food' | 'location' | 'academic' | 'social' | 'career' | 'query';
 }
 
+// Function to strip HTML tags from text
+const stripHtmlTags = (html: string): string => {
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = html;
+  return tempDiv.textContent || tempDiv.innerText || '';
+};
+
+// Function to format description text with proper line breaks
+const formatDescription = (description: string): string => {
+  // First strip any HTML tags
+  let cleanText = stripHtmlTags(description);
+  
+  // Replace dates and times patterns with line breaks
+  cleanText = cleanText.replace(/(\d{1,2}:\d{2}\s*[AP]M\s*-\s*\d{1,2}:\d{2}\s*[AP]M)/g, '\n$1');
+  cleanText = cleanText.replace(/(March \d{1,2}\s*\|\s*\d{1,2}(?::\d{2})?\s*[AP]M)/g, '\n\n$1');
+  cleanText = cleanText.replace(/(March \d{1,2}(-\d{1,2})?,\s*\d{4})/g, '\n$1');
+  
+  // Add line breaks before locations
+  cleanText = cleanText.replace(/(Campus Center|Ballroom|Atrium)/g, '\n$1');
+  
+  // Add line breaks before event descriptions
+  cleanText = cleanText.replace(/(Explore|Take time|Celebrate|Join us)/g, '\n$1');
+  
+  // Replace multiple spaces with a single space
+  cleanText = cleanText.replace(/\s+/g, ' ').trim();
+  
+  return cleanText;
+};
+
 const CampusEngagementHub: React.FC = () => {
   const [query, setQuery] = useState<string>('');
   const [results, setResults] = useState<Event[]>([]);
@@ -72,12 +101,22 @@ const CampusEngagementHub: React.FC = () => {
         if (Array.isArray(data)) {
           // Old format: just an array of events
           console.log("Received array format with", data.length, "events");
-          setResults(data);
+          // Process the events to clean HTML and format descriptions
+          const processedEvents = data.map(event => ({
+            ...event,
+            description: formatDescription(event.description)
+          }));
+          setResults(processedEvents);
           setErrorMessage(null);
         } else if (data.events) {
           // New format: { events, message }
           console.log("Received object format with", data.events.length, "events");
-          setResults(data.events);
+          // Process the events to clean HTML and format descriptions
+          const processedEvents = data.events.map(event => ({
+            ...event,
+            description: formatDescription(event.description)
+          }));
+          setResults(processedEvents);
           setErrorMessage(data.message);
         } else {
           // Unexpected format
@@ -373,14 +412,6 @@ const CampusEngagementHub: React.FC = () => {
           </div>
         )}
 
-        {/* For debugging - remove in production */}
-        {!isLoading && (
-          <div className="mt-4 p-2 bg-gray-100 rounded text-xs text-gray-500">
-            Results count: {results?.length || 0}
-            {errorMessage && <div>Error: {errorMessage}</div>}
-          </div>
-        )}
-
         {/* Search results */}
         {!isLoading && (
           <>
@@ -403,7 +434,9 @@ const CampusEngagementHub: React.FC = () => {
                           <h3 className="font-medium text-lg text-gray-900">{event.title}</h3>
                           {getRelevanceIndicator(event.relevanceScore)}
                         </div>
-                        <p className="text-gray-500 mt-1 line-clamp-2">{event.description}</p>
+                        <p className="text-gray-500 mt-1 whitespace-pre-line">
+                          {event.description}
+                        </p>
                         <div className="flex flex-wrap items-center mt-2 text-sm text-gray-500 gap-3">
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 mr-1 text-blue-500" />
