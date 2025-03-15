@@ -54,11 +54,22 @@ export const fetchNJITEvents = async (query: string = '', page: number = 1): Pro
     
     console.log("Fetching from URL:", url.toString());
     
-    // Fetch data from the API
-    const response = await fetch(url.toString());
+    // Use more permissive CORS settings and add headers
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      mode: 'cors',
+      cache: 'no-cache',
+    });
     
     if (!response.ok) {
       console.error("API response not OK:", response.status, response.statusText);
+      // Log the response body for debugging
+      const errorText = await response.text();
+      console.error("Error response body:", errorText);
       throw new Error(`Error fetching events: ${response.statusText}`);
     }
     
@@ -67,6 +78,7 @@ export const fetchNJITEvents = async (query: string = '', page: number = 1): Pro
     
     // If no events, return empty array
     if (!data.value || data.value.length === 0) {
+      console.log("No events returned from API");
       return [];
     }
     
@@ -88,38 +100,42 @@ export const fetchNJITEvents = async (query: string = '', page: number = 1): Pro
       // Determine event category
       let category: 'academic' | 'social' | 'career' | 'food' | 'other' = 'other';
       
-      if (njitEvent.categoryNames.some(cat => 
-        cat.toLowerCase().includes('academic') || 
-        cat.toLowerCase().includes('education') || 
-        cat.toLowerCase().includes('lecture') ||
-        cat.toLowerCase().includes('study') ||
-        cat.toLowerCase().includes('workshop'))) {
-        category = 'academic';
-      } else if (njitEvent.categoryNames.some(cat => 
-        cat.toLowerCase().includes('career') || 
-        cat.toLowerCase().includes('job') || 
-        cat.toLowerCase().includes('professional'))) {
-        category = 'career';
-      } else if (njitEvent.categoryNames.some(cat => 
-        cat.toLowerCase().includes('social') || 
-        cat.toLowerCase().includes('community') || 
-        cat.toLowerCase().includes('cultural'))) {
-        category = 'social';
+      if (njitEvent.categoryNames && Array.isArray(njitEvent.categoryNames)) {
+        if (njitEvent.categoryNames.some(cat => 
+          cat.toLowerCase().includes('academic') || 
+          cat.toLowerCase().includes('education') || 
+          cat.toLowerCase().includes('lecture') ||
+          cat.toLowerCase().includes('study') ||
+          cat.toLowerCase().includes('workshop'))) {
+          category = 'academic';
+        } else if (njitEvent.categoryNames.some(cat => 
+          cat.toLowerCase().includes('career') || 
+          cat.toLowerCase().includes('job') || 
+          cat.toLowerCase().includes('professional'))) {
+          category = 'career';
+        } else if (njitEvent.categoryNames.some(cat => 
+          cat.toLowerCase().includes('social') || 
+          cat.toLowerCase().includes('community') || 
+          cat.toLowerCase().includes('cultural'))) {
+          category = 'social';
+        }
       }
       
       // Check if food is mentioned in the description or benefits
       const hasFoodMention = 
-        njitEvent.description.toLowerCase().includes('food') || 
-        njitEvent.description.toLowerCase().includes('refreshment') ||
-        njitEvent.description.toLowerCase().includes('snack') ||
-        njitEvent.description.toLowerCase().includes('lunch') ||
-        njitEvent.description.toLowerCase().includes('dinner') ||
-        njitEvent.description.toLowerCase().includes('breakfast') ||
-        njitEvent.description.toLowerCase().includes('pizza') ||
-        njitEvent.description.toLowerCase().includes('drinks');
+        njitEvent.description && (
+          njitEvent.description.toLowerCase().includes('food') || 
+          njitEvent.description.toLowerCase().includes('refreshment') ||
+          njitEvent.description.toLowerCase().includes('snack') ||
+          njitEvent.description.toLowerCase().includes('lunch') ||
+          njitEvent.description.toLowerCase().includes('dinner') ||
+          njitEvent.description.toLowerCase().includes('breakfast') ||
+          njitEvent.description.toLowerCase().includes('pizza') ||
+          njitEvent.description.toLowerCase().includes('drinks')
+        );
       
-      const hasFoodBenefit = njitEvent.benefitNames.some(benefit => 
-        benefit.toLowerCase().includes('food'));
+      const hasFoodBenefit = njitEvent.benefitNames && Array.isArray(njitEvent.benefitNames) &&
+        njitEvent.benefitNames.some(benefit => benefit.toLowerCase().includes('food'));
       
       const hasFood = hasFoodMention || hasFoodBenefit;
       
@@ -130,15 +146,17 @@ export const fetchNJITEvents = async (query: string = '', page: number = 1): Pro
       
       // Extract food type if possible
       let foodType = undefined;
-      const foodTypes = [
-        'pizza', 'sandwich', 'lunch', 'dinner', 'breakfast', 
-        'refreshment', 'snack', 'coffee', 'catering', 'buffet'
-      ];
-      
-      for (const type of foodTypes) {
-        if (njitEvent.description.toLowerCase().includes(type)) {
-          foodType = type.charAt(0).toUpperCase() + type.slice(1);
-          break;
+      if (njitEvent.description) {
+        const foodTypes = [
+          'pizza', 'sandwich', 'lunch', 'dinner', 'breakfast', 
+          'refreshment', 'snack', 'coffee', 'catering', 'buffet'
+        ];
+        
+        for (const type of foodTypes) {
+          if (njitEvent.description.toLowerCase().includes(type)) {
+            foodType = type.charAt(0).toUpperCase() + type.slice(1);
+            break;
+          }
         }
       }
       
@@ -148,31 +166,38 @@ export const fetchNJITEvents = async (query: string = '', page: number = 1): Pro
       }
       
       // Extract relevant tags from categories and benefits
-      const tags = [...(njitEvent.categoryNames || []), ...(njitEvent.benefitNames || [])]
-        .map(tag => tag.toLowerCase())
-        .filter((tag, index, self) => self.indexOf(tag) === index); // Remove duplicates
+      const tags = [];
+      if (njitEvent.categoryNames && Array.isArray(njitEvent.categoryNames)) {
+        tags.push(...njitEvent.categoryNames.map(tag => tag.toLowerCase()));
+      }
+      if (njitEvent.benefitNames && Array.isArray(njitEvent.benefitNames)) {
+        tags.push(...njitEvent.benefitNames.map(tag => tag.toLowerCase()));
+      }
+      
+      // Remove duplicates
+      const uniqueTags = [...new Set(tags)];
       
       // Check if event is targeted to commuters
       const isCommuter = 
-        njitEvent.description.toLowerCase().includes('commuter') || 
-        tags.some(tag => tag.includes('commuter'));
+        (njitEvent.description && njitEvent.description.toLowerCase().includes('commuter')) || 
+        uniqueTags.some(tag => tag.includes('commuter'));
       
-      if (isCommuter && !tags.includes('commuter')) {
-        tags.push('commuter');
+      if (isCommuter && !uniqueTags.includes('commuter')) {
+        uniqueTags.push('commuter');
       }
       
       return {
         id: njitEvent.id.toString(),
         title: njitEvent.name,
-        description: njitEvent.description,
+        description: njitEvent.description || 'No description available',
         location: njitEvent.location || 'NJIT Campus',
         date: formattedDate,
         time: formattedTime,
         hasFood,
         foodType: foodType,
-        organizerName: njitEvent.organizationName,
+        organizerName: njitEvent.organizationName || 'NJIT',
         category,
-        tags,
+        tags: uniqueTags,
         imageUrl: njitEvent.imagePath,
         relevanceScore: 70 // Default score, will be adjusted based on query and filters
       };
@@ -182,6 +207,9 @@ export const fetchNJITEvents = async (query: string = '', page: number = 1): Pro
     return events;
   } catch (error) {
     console.error('Error fetching NJIT events:', error);
-    throw error; // Re-throw to handle in the calling function
+    
+    // Rethrow the error to allow the route handler to handle it appropriately
+    // This ensures the UI can show a proper error message
+    throw error;
   }
 };

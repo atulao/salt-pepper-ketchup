@@ -62,23 +62,28 @@ const CampusEngagementHub: React.FC = () => {
         if (activeFilters.length) params.append('filters', activeFilters.join(','));
         params.append('persona', personaType);
 
+        console.log(`Fetching from: /api/search-events?${params.toString()}`);
         const response = await fetch(`/api/search-events?${params.toString()}`);
         const data = await response.json();
+        
+        console.log("Frontend received data:", data); // Debugging
         
         // Handle both response formats
         if (Array.isArray(data)) {
           // Old format: just an array of events
+          console.log("Received array format with", data.length, "events");
           setResults(data);
           setErrorMessage(null);
         } else if (data.events) {
           // New format: { events, message }
+          console.log("Received object format with", data.events.length, "events");
           setResults(data.events);
           setErrorMessage(data.message);
         } else {
           // Unexpected format
+          console.log("Unexpected data format:", data);
           setResults([]);
           setErrorMessage('Unable to parse search results');
-          console.error('Unexpected API response format:', data);
         }
       } catch (error) {
         console.error('Error fetching search results:', error);
@@ -368,81 +373,92 @@ const CampusEngagementHub: React.FC = () => {
           </div>
         )}
 
-        {/* Error message */}
-        {errorMessage && !isLoading && (
-          <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
-            <div className="flex justify-center mb-3">
-              <AlertCircle className="h-6 w-6 text-amber-500" />
-            </div>
-            <p className="text-lg font-medium text-amber-800 mb-2">No Events Found</p>
-            <p className="text-sm text-amber-700">{errorMessage}</p>
+        {/* For debugging - remove in production */}
+        {!isLoading && (
+          <div className="mt-4 p-2 bg-gray-100 rounded text-xs text-gray-500">
+            Results count: {results?.length || 0}
+            {errorMessage && <div>Error: {errorMessage}</div>}
           </div>
         )}
 
         {/* Search results */}
-        {results.length > 0 ? (
-          <div className="mt-6 bg-white rounded-xl shadow-md overflow-hidden divide-y divide-gray-100">
-            {results.map((event) => (
-              <div key={event.id} className="p-5 hover:bg-gray-50 transition-colors cursor-pointer">
-                <div className="flex items-start">
-                  {event.imageUrl && (
-                    <div className="flex-shrink-0 mr-4">
-                      <img 
-                        src={event.imageUrl} 
-                        alt={event.title} 
-                        className="h-16 w-16 object-cover rounded-lg"
-                      />
-                    </div>
-                  )}
-                  <div className="flex-grow">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-medium text-lg text-gray-900">{event.title}</h3>
-                      {getRelevanceIndicator(event.relevanceScore)}
-                    </div>
-                    <p className="text-gray-500 mt-1 line-clamp-2">{event.description}</p>
-                    <div className="flex flex-wrap items-center mt-2 text-sm text-gray-500 gap-3">
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-1 text-blue-500" />
-                        <span>{event.date} • {event.time}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-1 text-green-500" />
-                        <span>{event.location}</span>
-                      </div>
-                      <div className="flex items-center">
-                        {getCategoryIcon(event.category)}
-                        <span className="capitalize">{event.category}</span>
-                      </div>
-                      {event.hasFood && (
-                        <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                          {event.foodType || 'Free Food'}
-                        </span>
+        {!isLoading && (
+          <>
+            {results && results.length > 0 ? (
+              <div className="mt-6 bg-white rounded-xl shadow-md overflow-hidden divide-y divide-gray-100">
+                {results.map((event) => (
+                  <div key={event.id} className="p-5 hover:bg-gray-50 transition-colors cursor-pointer">
+                    <div className="flex items-start">
+                      {event.imageUrl && (
+                        <div className="flex-shrink-0 mr-4">
+                          <img 
+                            src={event.imageUrl} 
+                            alt={event.title} 
+                            className="h-16 w-16 object-cover rounded-lg"
+                          />
+                        </div>
                       )}
-                    </div>
-                    {event.tags && event.tags.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {event.tags.map((tag, index) => (
-                          <span 
-                            key={index} 
-                            className="inline-block bg-gray-100 rounded-full px-2 py-0.5 text-xs text-gray-600"
-                          >
-                            {tag}
-                          </span>
-                        ))}
+                      <div className="flex-grow">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-medium text-lg text-gray-900">{event.title}</h3>
+                          {getRelevanceIndicator(event.relevanceScore)}
+                        </div>
+                        <p className="text-gray-500 mt-1 line-clamp-2">{event.description}</p>
+                        <div className="flex flex-wrap items-center mt-2 text-sm text-gray-500 gap-3">
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-1 text-blue-500" />
+                            <span>{event.date} • {event.time}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <MapPin className="h-4 w-4 mr-1 text-green-500" />
+                            <span>{event.location}</span>
+                          </div>
+                          <div className="flex items-center">
+                            {getCategoryIcon(event.category)}
+                            <span className="capitalize">{event.category}</span>
+                          </div>
+                          {event.hasFood && (
+                            <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                              {event.foodType || 'Free Food'}
+                            </span>
+                          )}
+                        </div>
+                        {event.tags && event.tags.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {event.tags.map((tag, index) => (
+                              <span 
+                                key={index} 
+                                className="inline-block bg-gray-100 rounded-full px-2 py-0.5 text-xs text-gray-600"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : (
-          !errorMessage && !isLoading && query && (
-            <div className="mt-6 text-center text-gray-500 bg-white p-8 rounded-xl shadow-md">
-              <p className="text-lg mb-2">No events found</p>
-              <p className="text-sm">Try searching for "tutoring", "networking", or "free food"</p>
-            </div>
-          )
+            ) : (
+              errorMessage ? (
+                <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+                  <div className="flex justify-center mb-3">
+                    <AlertCircle className="h-6 w-6 text-amber-500" />
+                  </div>
+                  <p className="text-lg font-medium text-amber-800 mb-2">No Events Found</p>
+                  <p className="text-sm text-amber-700">{errorMessage}</p>
+                </div>
+              ) : (
+                query && (
+                  <div className="mt-6 text-center text-gray-500 bg-white p-8 rounded-xl shadow-md">
+                    <p className="text-lg mb-2">No events found</p>
+                    <p className="text-sm">Try searching for "tutoring", "networking", or "free food"</p>
+                  </div>
+                )
+              )
+            )}
+          </>
         )}
 
         {/* Commuter-focused message */}

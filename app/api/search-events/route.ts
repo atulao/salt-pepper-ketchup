@@ -51,11 +51,12 @@ export async function GET(request: Request) {
     
     console.log("API response received:", events.length, "events found");
     
-    // If no events returned from API, return empty array with a specific status code
+    // If no events returned from API, return clear message about no results
     if (events.length === 0) {
+      console.log("No events from API");
       return NextResponse.json({ 
         events: [], 
-        message: "No events found. Please try a different search or check back later." 
+        message: "No events found matching your search. Please try a different query or check back later." 
       });
     }
     
@@ -136,12 +137,10 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error('Error in search-events API:', error);
     
-    // TEMPORARY: Return mock data for development only if there's an error
-    // In production, we would want to return an error message
-    console.log("Error occurred, returning mock data for development");
+    // Return error message without mock data
     return NextResponse.json({ 
-      events: mockEvents, 
-      message: "Using demo data. Could not connect to NJIT events API."
+      events: [], 
+      message: "Unable to connect to the NJIT events database. Please check your internet connection and try again later."
     });
   }
 }
