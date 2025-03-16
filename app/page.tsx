@@ -1,9 +1,9 @@
-import CampusEngagementHub from './components/search/CampusEngagementHub';
+import EngagementHubWrapper from './components/client-wrappers/EngagementHubWrapper';
 
 export default function Home() {
   return (
     <main className="min-h-screen">
-      <CampusEngagementHub />
+      <EngagementHubWrapper />
     </main>
   );
 }

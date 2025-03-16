@@ -732,22 +732,13 @@ const CampusEngagementHub: React.FC = () => {
                             {/* Maps would go here, but commented out for now */}
                             
                             {expandedDescriptions[event.id] && (
-                              <div className="mt-3 bg-blue-50 p-4 rounded text-center">
-                                <p className="text-blue-600">Map would appear here</p>
-                                
-                                {/* Map directions button */}
-                                <a 
-                                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(event.location)},NJIT,Newark,NJ`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="mt-2 flex items-center justify-center bg-blue-100 text-blue-600 py-2 px-4 rounded-md hover:bg-blue-200 transition-colors"
-                                >
-                                  <MapPin className="h-4 w-4 mr-2" />
-                                  Get Directions
-                                </a>
-                              </div>
-                            )}
-
+  <div className="mt-3">
+    <CampusMap 
+      location={event.location}
+      eventTitle={event.title}
+    />
+  </div>
+)}
                             {/* Description */}
                             <div className="relative mt-1">
                               <p className={`text-gray-500 whitespace-pre-line ${
