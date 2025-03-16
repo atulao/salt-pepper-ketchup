@@ -6,9 +6,9 @@ import {
   Search, Mic, X, Calendar, MapPin, Tag, BookOpen, Users, 
   Briefcase, Coffee, Clock, Sparkles, AlertCircle, Share2, 
   Calendar as CalendarIcon, Heart, MapPin as MapPinIcon, 
-  ChevronDown, ChevronUp, LinkIcon
+  ChevronDown, ChevronUp, LinkIcon, Home
 } from 'lucide-react';
-
+import { fetchNJITEvents, fetchResidenceLifeEvents, isResidenceLifeEvent } from '../../utils/data-fetcher';
 
 // Type Definitions
 interface Event {
@@ -90,7 +90,7 @@ const EVENTS_PER_PAGE = 5;
 const DEBOUNCE_SEARCH_MS = 300;
 const DEBOUNCE_SUGGESTIONS_MS = 150;
 
-// Example queries
+// Example queries for empty state
 const EXAMPLE_QUERIES = [
   "Where can I find free pizza today?",
   "Tutoring sessions for computer science this week",
@@ -106,6 +106,7 @@ const FILTER_OPTIONS: FilterOption[] = [
   { id: 'social', label: 'Social', icon: <Users className="h-4 w-4 mr-2" /> },
   { id: 'career', label: 'Career', icon: <Briefcase className="h-4 w-4 mr-2" /> },
   { id: 'today', label: 'Today', icon: <Clock className="h-4 w-4 mr-2" /> },
+  { id: 'residence', label: 'Residence Life', icon: <Home className="h-4 w-4 mr-2" /> },
 ];
 
 // Category icons mapping
@@ -156,10 +157,12 @@ const CampusEngagementHub: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [filterCounts, setFilterCounts] = useState<FilterCount[]>([]);
   const [imageLoaded, setImageLoaded] = useState<{[key: string]: boolean}>({});
+  const [hasMore, setHasMore] = useState<boolean>(true);
   
   // Refs
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const scrollSentinelRef = useRef<HTMLDivElement>(null);
   
   // Debounced values for improved performance
   const debouncedQuery = useDebounce(query, DEBOUNCE_SEARCH_MS);
@@ -187,6 +190,9 @@ const CampusEngagementHub: React.FC = () => {
     counts.push({ id: 'social', count: events.filter(event => event.category === 'social').length });
     counts.push({ id: 'career', count: events.filter(event => event.category === 'career').length });
     
+    // Count residence events
+    counts.push({ id: 'residence', count: events.filter(event => isResidenceLifeEvent(event)).length });
+    
     // Count today's events
     const today = new Date();
     const formattedToday = today.toLocaleDateString('en-US', {
@@ -197,6 +203,34 @@ const CampusEngagementHub: React.FC = () => {
     
     setFilterCounts(counts);
   }, []);
+
+  // Load favorites from localStorage on mount
+  useEffect(() => {
+    const savedFavorites = localStorage.getItem('favoriteEvents');
+    if (savedFavorites) {
+      try {
+        setFavoritedEvents(JSON.parse(savedFavorites));
+      } catch (e) {
+        console.error('Failed to parse saved favorites:', e);
+      }
+    }
+    
+    // Load last used persona
+    const savedPersona = localStorage.getItem('personaType');
+    if (savedPersona === 'resident' || savedPersona === 'commuter') {
+      setPersonaType(savedPersona);
+    }
+  }, []);
+
+  // Save favorites to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('favoriteEvents', JSON.stringify(favoritedEvents));
+  }, [favoritedEvents]);
+  
+  // Save persona when it changes
+  useEffect(() => {
+    localStorage.setItem('personaType', personaType);
+  }, [personaType]);
 
   // Fetch events data
   useEffect(() => {
@@ -215,26 +249,109 @@ const CampusEngagementHub: React.FC = () => {
         const params = new URLSearchParams();
         if (debouncedQuery) params.append('q', debouncedQuery);
         if (debouncedFilters.length) params.append('filters', debouncedFilters.join(','));
-        params.append('persona', debouncedPersona);
-
-        const response = await fetch(`/api/search-events?${params.toString()}`);
-        const data = await response.json();
+        params.append('persona', debouncedPersona); // Still pass persona for backend awareness
         
-        // Handle both response formats
-        if (Array.isArray(data)) {
-          const processedEvents = processEvents(data);
-          setResults(processedEvents);
-          setErrorMessage(null);
-          updateFilterCounts(processedEvents);
-        } else if (data.events) {
-          const processedEvents = processEvents(data.events);
-          setResults(processedEvents);
-          setErrorMessage(data.message);
-          updateFilterCounts(processedEvents);
-        } else {
-          setResults([]);
-          setErrorMessage('Unable to parse search results');
+        // Always fetch all events first
+        let allEvents: Event[] = [];
+        try {
+          const apiEvents = await fetchNJITEvents(debouncedQuery);
+          allEvents = processEvents(apiEvents);
+        } catch (error) {
+          console.error('Error fetching general events:', error);
+          // Continue with empty array
         }
+        
+        // Additional fetch for Residence Life events to ensure we have them
+        let residenceLifeEvents: Event[] = [];
+        try {
+          // Only fetch residence events if we're in resident mode or there's a specific filter
+          if (debouncedPersona === 'resident' || debouncedFilters.includes('residence')) {
+            residenceLifeEvents = await fetchResidenceLifeEvents();
+            residenceLifeEvents = processEvents(residenceLifeEvents);
+            
+            // Add them to allEvents to ensure we have a complete set, avoiding duplicates
+            allEvents = [...allEvents, ...residenceLifeEvents.filter(
+              re => !allEvents.some(e => e.id === re.id)
+            )];
+          }
+        } catch (e) {
+          console.error('Failed to fetch residence life events:', e);
+          // Continue with what we have
+        }
+        
+        if (allEvents.length === 0) {
+          setResults([]);
+          setErrorMessage('No events found. Please try a different search or check back later.');
+          setIsLoading(false);
+          return;
+        }
+        
+        // Filter based on persona
+        let filteredEvents: Event[];
+        
+        if (debouncedPersona === 'resident') {
+          // For Resident mode: Only show residence-related events
+          filteredEvents = allEvents.filter(event => isResidenceLifeEvent(event));
+          
+          // Boost the relevance score of these events
+          filteredEvents = filteredEvents.map(event => ({
+            ...event,
+            relevanceScore: Math.min(100, (event.relevanceScore || 70) + 20)
+          }));
+          
+          // If we don't have any residence events but they're in resident mode, show a specific message
+          if (filteredEvents.length === 0) {
+            setErrorMessage('No residence hall events found. Switch to commuter mode to see general campus events.');
+          }
+        } else {
+          // For Commuter mode: Show everything EXCEPT residence-specific events
+          filteredEvents = allEvents.filter(event => !isResidenceLifeEvent(event));
+          
+          // If we don't have any commuter events, show a specific message
+          if (filteredEvents.length === 0) {
+            setErrorMessage('No commuter-relevant events found. Switch to resident mode to see residence hall events.');
+          }
+        }
+        
+        // Apply any active filters
+        if (debouncedFilters.length > 0) {
+          filteredEvents = filteredEvents.filter(event => {
+            // For 'residence' filter in commuter mode, we need special handling
+            if (debouncedFilters.includes('residence') && debouncedPersona === 'commuter') {
+              // If they've specifically asked for residence events in commuter mode, 
+              // let them see them as an exception to the normal commuter filter
+              if (isResidenceLifeEvent(event)) return true;
+            }
+            
+            // Check category filters
+            if (debouncedFilters.includes(event.category)) return true;
+            
+            // Check for 'food' filter
+            if (debouncedFilters.includes('food') && event.hasFood) return true;
+            
+            // Check for 'today' filter
+            const today = new Date();
+            const formattedToday = today.toLocaleDateString('en-US', {
+              month: 'long',
+              day: 'numeric'
+            });
+            if (debouncedFilters.includes('today') && event.date.includes(formattedToday)) {
+              return true;
+            }
+            
+            return false;
+          });
+        }
+        
+        // Sort by relevance score
+        filteredEvents.sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
+        
+        setResults(filteredEvents);
+        setErrorMessage(null);
+        updateFilterCounts(filteredEvents);
+        
+        // Set hasMore flag for infinite scrolling
+        setHasMore(filteredEvents.length > EVENTS_PER_PAGE);
       } catch (error) {
         console.error('Error fetching search results:', error);
         setResults([]);
@@ -286,6 +403,30 @@ const CampusEngagementHub: React.FC = () => {
     };
   }, []);
 
+  // Infinite scroll
+  useEffect(() => {
+    if (!results.length || !hasMore) return;
+    
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          loadMoreEvents();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    
+    if (scrollSentinelRef.current) {
+      observer.observe(scrollSentinelRef.current);
+    }
+    
+    return () => {
+      if (scrollSentinelRef.current) {
+        observer.unobserve(scrollSentinelRef.current);
+      }
+    };
+  }, [hasMore, results.length, isLoading]);
+
   // Group events by date
   const groupedEvents = useMemo<GroupedEvents>(() => {
     const grouped: GroupedEvents = {};
@@ -325,8 +466,8 @@ const CampusEngagementHub: React.FC = () => {
 
   // Handle pagination
   const paginatedDates = useMemo(() => {
-    const startIndex = (currentPage - 1) * EVENTS_PER_PAGE;
-    const endIndex = Math.min(startIndex + EVENTS_PER_PAGE, sortedDates.length);
+    const startIndex = 0;
+    const endIndex = Math.min(currentPage * EVENTS_PER_PAGE, sortedDates.length);
     return sortedDates.slice(startIndex, endIndex);
   }, [sortedDates, currentPage]);
 
@@ -347,6 +488,14 @@ const CampusEngagementHub: React.FC = () => {
       searchInputRef.current.focus();
     }
   }, []);
+
+  const loadMoreEvents = useCallback(() => {
+    if (currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1);
+    } else {
+      setHasMore(false);
+    }
+  }, [currentPage, totalPages]);
 
   const handleVoiceSearch = useCallback(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -412,20 +561,6 @@ const CampusEngagementHub: React.FC = () => {
     }));
   }, []);
 
-  const handleNextPage = useCallback(() => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [currentPage, totalPages]);
-  
-  const handlePrevPage = useCallback(() => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [currentPage]);
-
   const handleImageError = useCallback((eventId: string) => {
     setImageLoaded(prev => ({ ...prev, [eventId]: false }));
   }, []);
@@ -458,6 +593,7 @@ const CampusEngagementHub: React.FC = () => {
     
     return null;
   }, []);
+
   const addToCalendar = useCallback((event: Event) => {
     try {
       // Format the date and time for calendar
@@ -523,7 +659,216 @@ const CampusEngagementHub: React.FC = () => {
     }
   }, []);
 
-  // UI element
+  // Render helper components
+  const renderEventImage = useCallback((event: Event) => {
+    if (event.imageUrl) {
+      return (
+        <>
+          {/* Skeleton loader */}
+          {!imageLoaded[event.id] && (
+            <div className="h-16 w-16 bg-gray-200 rounded-lg animate-pulse"></div>
+          )}
+          <img 
+            src={event.imageUrl} 
+            alt={event.title} 
+            className={`h-16 w-16 object-cover rounded-lg ${imageLoaded[event.id] ? 'visible' : 'hidden'}`}
+            onLoad={() => setImageLoaded(prev => ({...prev, [event.id]: true}))}
+            onError={() => handleImageError(event.id)}
+          />
+        </>
+      );
+    }
+    
+    return (
+      <div className="h-16 w-16 bg-gray-200 rounded-lg flex items-center justify-center">
+        <Calendar className="h-6 w-6 text-gray-400" />
+      </div>
+    );
+  }, [imageLoaded, handleImageError]);
+
+  const renderEventCard = useCallback((event: Event) => (
+    <div 
+      key={event.id} 
+      className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200 border border-gray-200"
+    >
+      <div className="p-5">
+        <div className="flex items-start">
+          {/* Event image */}
+          <div className="flex-shrink-0 mr-4 relative">
+            {renderEventImage(event)}
+          </div>
+
+          <div className="flex-grow">
+            <div className="flex justify-between items-start">
+              <h3 className="font-medium text-lg text-gray-900">{event.title}</h3>
+              {getRelevanceIndicator(event.relevanceScore)}
+            </div>
+
+            {/* Residence badge */}
+            {isResidenceLifeEvent(event) && (
+              <div className="mt-1 mb-2">
+                <span className="inline-flex items-center bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full">
+                  <Home className="h-3 w-3 mr-1" />
+                  Residence Life Event
+                </span>
+              </div>
+            )}
+
+            {/* Map (when expanded) */}
+            {expandedDescriptions[event.id] && (
+              <div className="mt-3">
+                <CampusMap 
+                  location={event.location}
+                  eventTitle={event.title}
+                />
+                
+                {/* Directions button */}
+                <a 
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(event.location)},NJIT,Newark,NJ`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 flex items-center justify-center bg-blue-50 text-blue-600 py-2 px-4 rounded-md hover:bg-blue-100 transition-colors"
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Get Directions
+                </a>
+              </div>
+            )}
+
+            {/* Description */}
+            <div className="relative mt-1">
+              <p className={`text-gray-500 whitespace-pre-line ${
+                expandedDescriptions[event.id] ? '' : 'line-clamp-2'
+              }`}>
+                {event.description}
+              </p>
+              
+              {/* Read more/less button */}
+              {event.description.length > 100 && (
+                <button 
+                  onClick={() => toggleExpandDescription(event.id)}
+                  className="mt-1 text-blue-500 text-sm font-medium flex items-center hover:text-blue-600"
+                >
+                  {expandedDescriptions[event.id] ? (
+                    <>Show less <ChevronUp className="h-4 w-4 ml-1" /></>
+                  ) : (
+                    <>Read more <ChevronDown className="h-4 w-4 ml-1" /></>
+                  )}
+                </button>
+              )}
+            </div>
+            
+            {/* Event metadata */}
+            <div className="flex flex-wrap items-center mt-2 text-sm text-gray-500 gap-3">
+              <div className="flex items-center">
+                <Calendar className="h-4 w-4 mr-1 text-blue-500" />
+                <span>{event.date} • {event.time}</span>
+              </div>
+              <div className="flex items-center group relative">
+                <MapPin className="h-4 w-4 mr-1 text-green-500" />
+                <span>{event.location}</span>
+                {/* Map preview on hover */}
+                <div className="absolute bottom-full left-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                  <div className="bg-white p-1 rounded shadow-lg">
+                    <div className="text-xs text-center text-gray-500 pb-1">
+                      Click for directions
+                    </div>
+                    <div className="w-48 h-32 bg-blue-50 flex items-center justify-center rounded">
+                      <MapPinIcon className="h-6 w-6 text-red-500" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center">
+                {getCategoryIcon(event.category)}
+                <span className="capitalize">{event.category}</span>
+              </div>
+              {event.hasFood && (
+                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                  {event.foodType || 'Free Food'}
+                </span>
+              )}
+            </div>
+            
+            {/* Tags */}
+            {event.tags && event.tags.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {event.tags.map((tag, index) => (
+                  <span 
+                    key={index} 
+                    className="inline-block bg-gray-100 rounded-full px-2 py-0.5 text-xs text-gray-600"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+            
+            {/* Action buttons */}
+            <div className="mt-3 flex space-x-2">
+              <button 
+                onClick={() => toggleFavorite(event.id)}
+                className={`flex items-center p-1.5 rounded-full ${
+                  favoritedEvents[event.id] 
+                    ? 'text-red-500 bg-red-50 hover:bg-red-100' 
+                    : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
+                }`}
+                aria-label="Favorite"
+              >
+                <Heart className="h-4 w-4" fill={favoritedEvents[event.id] ? 'currentColor' : 'none'} />
+              </button>
+              
+              <button 
+                onClick={() => addToCalendar(event)}
+                className="flex items-center p-1.5 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
+                aria-label="Add to Calendar"
+              >
+                <CalendarIcon className="h-4 w-4" />
+              </button>
+              
+              <button 
+                onClick={() => shareEvent(event)}
+                className="flex items-center p-1.5 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
+                aria-label="Share"
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+              
+              <a 
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center p-1.5 text-gray-400 hover:text-green-500 hover:bg-gray-100 rounded-full"
+                aria-label="Get directions"
+              >
+                <MapPinIcon className="h-4 w-4" />
+              </a>
+              
+              <button 
+                onClick={() => window.open(`/event/${event.id}`, '_blank')}
+                className="flex items-center p-1.5 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
+                aria-label="View details"
+              >
+                <LinkIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  ), [
+    renderEventImage, 
+    getRelevanceIndicator, 
+    expandedDescriptions, 
+    toggleExpandDescription, 
+    getCategoryIcon,
+    favoritedEvents, 
+    toggleFavorite, 
+    addToCalendar, 
+    shareEvent
+  ]);
+
+  // Main render
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-50">
       <div className="mt-16 md:mt-24 mb-6 text-center px-4">
@@ -531,18 +876,56 @@ const CampusEngagementHub: React.FC = () => {
         <p className="text-lg md:text-xl text-gray-600">Your AI campus guide for events, resources, and connections</p>
       </div>
 
-      {/* Persona toggle */}
+      {/* Enhanced Persona toggle with clear purpose */}
       <div className="mb-6">
-        <button 
-          onClick={togglePersona}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-            personaType === 'commuter' 
-              ? 'bg-blue-100 text-blue-700' 
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
-        >
-          {personaType === 'commuter' ? '🚗 Commuter Mode' : '🏠 Resident Mode'}
-        </button>
+        <div className="text-center mb-2 text-sm text-gray-600 font-medium">
+          What's your campus status?
+        </div>
+        <div className="flex justify-center space-x-3">
+          <button 
+            onClick={() => setPersonaType('commuter')}
+            className={`relative px-5 py-3 rounded-xl text-sm font-medium transition-all ${
+              personaType === 'commuter' 
+                ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-300 scale-105' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {personaType === 'commuter' && (
+              <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
+                Active
+              </div>
+            )}
+            <div className="flex flex-col items-center">
+              <span className="text-2xl mb-1">🚗</span>
+              <div className="font-semibold">Commuter</div>
+              <div className="text-xs font-normal mt-1 max-w-40 text-center">
+                Shows general campus events for non-resident students
+              </div>
+            </div>
+          </button>
+          
+          <button 
+            onClick={() => setPersonaType('resident')}
+            className={`relative px-5 py-3 rounded-xl text-sm font-medium transition-all ${
+              personaType === 'resident' 
+                ? 'bg-purple-100 text-purple-700 ring-2 ring-purple-300 scale-105' 
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {personaType === 'resident' && (
+              <div className="absolute -top-2 -right-2 bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full">
+                Active
+              </div>
+            )}
+            <div className="flex flex-col items-center">
+              <span className="text-2xl mb-1">🏠</span>
+              <div className="font-semibold">Resident</div>
+              <div className="text-xs font-normal mt-1 max-w-40 text-center">
+                Only shows events for students living in campus housing
+              </div>
+            </div>
+          </button>
+        </div>
       </div>
 
       <div className="w-full max-w-3xl px-4" ref={searchContainerRef}>
@@ -562,7 +945,9 @@ const CampusEngagementHub: React.FC = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setIsFocused(true)}
-            placeholder="What are you looking for on campus?"
+            placeholder={personaType === 'resident' 
+              ? "Search for residence hall events..." 
+              : "Search for campus events..."}
             className="flex-grow py-4 px-2 text-gray-700 focus:outline-none w-full text-lg"
             autoComplete="off"
           />
@@ -659,254 +1044,120 @@ const CampusEngagementHub: React.FC = () => {
           </div>
         )}
 
-        {/* No results message */}
-        {!isLoading && query && results.length === 0 && (
-          <div className="mt-6 text-center text-gray-500 bg-white p-8 rounded-xl shadow-md">
-            <p className="text-lg mb-2">No events found</p>
-            <p className="text-sm">Try searching for "tutoring", "networking", or "free food"</p>
-          </div>
-        )}
-
-        {/* Error message */}
-        {!isLoading && errorMessage && (
-          <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
-            <div className="flex justify-center mb-3">
-              <AlertCircle className="h-6 w-6 text-amber-500" />
+        {/* Informative banner explaining the current mode */}
+        {results.length > 0 && (
+          <div className={`mt-6 mb-4 p-3 rounded-lg ${
+            personaType === 'resident' 
+              ? 'bg-purple-50 border border-purple-100 text-purple-700' 
+              : 'bg-blue-50 border border-blue-100 text-blue-700'
+          }`}>
+            <div className="flex items-center">
+              <span className="text-lg mr-2">
+                {personaType === 'resident' ? '🏠' : '🚗'}
+              </span>
+              <div>
+                <p className="font-medium">
+                  {personaType === 'resident' 
+                    ? 'Showing residence hall events only' 
+                    : 'Showing commuter-relevant events'}
+                </p>
+                <p className="text-xs">
+                  {personaType === 'resident'
+                    ? 'These events are specifically for students living in campus housing.'
+                    : 'These events are filtered for commuter students. Residence hall events are hidden.'}
+                </p>
+              </div>
             </div>
-            <p className="text-lg font-medium text-amber-800 mb-2">No Events Found</p>
-            <p className="text-sm text-amber-700">{errorMessage}</p>
           </div>
         )}
 
-        {/* Search results - Basic display without event cards or CampusMap */}
-        {!isLoading && results.length > 0 && (
-          <div className="mt-6">
-            {paginatedDates.map(dateKey => (
-              <div key={dateKey} className="mb-8">
-                {/* Date header - sticky */}
-                <div className="sticky top-0 bg-gray-50 py-2 z-10">
-                  <h2 className="text-lg font-medium text-gray-800 border-b border-gray-200 pb-2 mb-4 flex items-center">
-                    <Calendar className="h-5 w-5 mr-2 text-blue-600" />
-                    {dateKey}
-                  </h2>
-                </div>
-
-                {/* Events for this date - with full styling */}
-                <div className="space-y-4">
-                  {groupedEvents[dateKey].map(event => (
-                    <div 
-                      key={event.id} 
-                      className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200 border border-gray-200"
-                    >
-                      <div className="p-5">
-                        <div className="flex items-start">
-                          {/* Event image */}
-                          <div className="flex-shrink-0 mr-4 relative">
-                            {event.imageUrl ? (
-                              <>
-                                {/* Skeleton loader */}
-                                {!imageLoaded[event.id] && (
-                                  <div className="h-16 w-16 bg-gray-200 rounded-lg animate-pulse"></div>
-                                )}
-                                <img 
-                                  src={event.imageUrl} 
-                                  alt={event.title} 
-                                  className={`h-16 w-16 object-cover rounded-lg ${imageLoaded[event.id] ? 'visible' : 'hidden'}`}
-                                  onLoad={() => setImageLoaded(prev => ({...prev, [event.id]: true}))}
-                                  onError={() => handleImageError(event.id)}
-                                />
-                              </>
-                            ) : (
-                              <div className="h-16 w-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                                <Calendar className="h-6 w-6 text-gray-400" />
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex-grow">
-                            <div className="flex justify-between items-start">
-                              <h3 className="font-medium text-lg text-gray-900">{event.title}</h3>
-                              {getRelevanceIndicator(event.relevanceScore)}
-                            </div>
-
-                            {/* Maps would go here, but commented out for now */}
-                            
-                            {expandedDescriptions[event.id] && (
-  <div className="mt-3">
-    <CampusMap 
-      location={event.location}
-      eventTitle={event.title}
-    />
-  </div>
-)}
-                            {/* Description */}
-                            <div className="relative mt-1">
-                              <p className={`text-gray-500 whitespace-pre-line ${
-                                expandedDescriptions[event.id] ? '' : 'line-clamp-2'
-                              }`}>
-                                {event.description}
-                              </p>
-                              
-                              {/* Read more/less button */}
-                              {event.description.length > 100 && (
-                                <button 
-                                  onClick={() => toggleExpandDescription(event.id)}
-                                  className="mt-1 text-blue-500 text-sm font-medium flex items-center hover:text-blue-600"
-                                >
-                                  {expandedDescriptions[event.id] ? (
-                                    <>Show less <ChevronUp className="h-4 w-4 ml-1" /></>
-                                  ) : (
-                                    <>Read more <ChevronDown className="h-4 w-4 ml-1" /></>
-                                  )}
-                                </button>
-                              )}
-                            </div>
-                            
-                            {/* Event metadata */}
-                            <div className="flex flex-wrap items-center mt-2 text-sm text-gray-500 gap-3">
-                              <div className="flex items-center">
-                                <Calendar className="h-4 w-4 mr-1 text-blue-500" />
-                                <span>{event.date} • {event.time}</span>
-                              </div>
-                              <div className="flex items-center group relative">
-                                <MapPin className="h-4 w-4 mr-1 text-green-500" />
-                                <span>{event.location}</span>
-                                {/* Map preview on hover */}
-                                <div className="absolute bottom-full left-0 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                                  <div className="bg-white p-1 rounded shadow-lg">
-                                    <div className="text-xs text-center text-gray-500 pb-1">
-                                      Click for directions
-                                    </div>
-                                    <div className="w-48 h-32 bg-blue-50 flex items-center justify-center rounded">
-                                      <MapPinIcon className="h-6 w-6 text-red-500" />
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex items-center">
-                                {getCategoryIcon(event.category)}
-                                <span className="capitalize">{event.category}</span>
-                              </div>
-                              {event.hasFood && (
-                                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                                  {event.foodType || 'Free Food'}
-                                </span>
-                              )}
-                            </div>
-                            
-                            {/* Tags */}
-                            {event.tags && event.tags.length > 0 && (
-                              <div className="mt-2 flex flex-wrap gap-1">
-                                {event.tags.map((tag, index) => (
-                                  <span 
-                                    key={index} 
-                                    className="inline-block bg-gray-100 rounded-full px-2 py-0.5 text-xs text-gray-600"
-                                  >
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                            
-                            {/* Action buttons */}
-                            <div className="mt-3 flex space-x-2">
-                              <button 
-                                onClick={() => toggleFavorite(event.id)}
-                                className={`flex items-center p-1.5 rounded-full ${
-                                  favoritedEvents[event.id] 
-                                    ? 'text-red-500 bg-red-50 hover:bg-red-100' 
-                                    : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
-                                }`}
-                                aria-label="Favorite"
-                              >
-                                <Heart className="h-4 w-4" fill={favoritedEvents[event.id] ? 'currentColor' : 'none'} />
-                              </button>
-                              
-                              <button 
-                                onClick={() => addToCalendar(event)}
-                                className="flex items-center p-1.5 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
-                                aria-label="Add to Calendar"
-                              >
-                                <CalendarIcon className="h-4 w-4" />
-                              </button>
-                              
-                              <button 
-                                onClick={() => shareEvent(event)}
-                                className="flex items-center p-1.5 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
-                                aria-label="Share"
-                              >
-                                <Share2 className="h-4 w-4" />
-                              </button>
-                              
-                              <a 
-                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="flex items-center p-1.5 text-gray-400 hover:text-green-500 hover:bg-gray-100 rounded-full"
-                                aria-label="Get directions"
-                              >
-                                <MapPinIcon className="h-4 w-4" />
-                              </a>
-                              
-                              <button 
-                                onClick={() => window.open(`/event/${event.id}`, '_blank')}
-                                className="flex items-center p-1.5 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
-                                aria-label="View details"
-                              >
-                                <LinkIcon className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+        {/* Search results */}
+        {!isLoading && (
+          <>
+            {results.length > 0 ? (
+              <div className="mt-6">
+                {paginatedDates.map(dateKey => (
+                  <div key={dateKey} className="mb-8">
+                    {/* Date header - sticky */}
+                    <div className="sticky top-0 bg-gray-50 py-2 z-10">
+                      <h2 className="text-lg font-medium text-gray-800 border-b border-gray-200 pb-2 mb-4 flex items-center">
+                        <Calendar className="h-5 w-5 mr-2 text-blue-600" />
+                        {dateKey}
+                      </h2>
                     </div>
-                  ))}
+
+                    {/* Events for this date */}
+                    <div className="space-y-4">
+                      {groupedEvents[dateKey].map(event => renderEventCard(event))}
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Infinite scroll sentinel */}
+                {hasMore && (
+                  <div 
+                    ref={scrollSentinelRef} 
+                    className="h-10 flex items-center justify-center mt-4 mb-8"
+                  >
+                    <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              errorMessage ? (
+                <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-6 text-center">
+                  <div className="flex justify-center mb-4">
+                    {personaType === 'resident' ? (
+                      <span className="text-3xl">🏠</span>
+                    ) : (
+                      <span className="text-3xl">🚗</span>
+                    )}
+                  </div>
+                  <p className="text-lg font-medium text-amber-800 mb-2">
+                    {personaType === 'resident' 
+                      ? "No residence hall events found" 
+                      : "No commuter events found"}
+                  </p>
+                  <p className="text-sm text-amber-700 mb-4">{errorMessage}</p>
+                  <div className="flex justify-center">
+                    <button 
+                      onClick={() => setPersonaType(personaType === 'resident' ? 'commuter' : 'resident')}
+                      className="text-blue-600 text-sm font-medium hover:underline"
+                    >
+                      Switch to {personaType === 'resident' ? 'Commuter' : 'Resident'} mode instead
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-            
-            {/* Pagination controls */}
-            {totalPages > 1 && (
-              <div className="mt-6 flex justify-center items-center space-x-2">
-                <button 
-                  onClick={handlePrevPage}
-                  disabled={currentPage === 1}
-                  className={`px-3 py-1 rounded border ${
-                    currentPage === 1 
-                      ? 'text-gray-400 border-gray-200 cursor-not-allowed' 
-                      : 'text-blue-600 border-blue-300 hover:bg-blue-50'
-                  }`}
-                >
-                  Previous
-                </button>
-                
-                <span className="text-sm text-gray-600">
-                  Page {currentPage} of {totalPages}
-                </span>
-                
-                <button 
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages}
-                  className={`px-3 py-1 rounded border ${
-                    currentPage === totalPages 
-                      ? 'text-gray-400 border-gray-200 cursor-not-allowed' 
-                      : 'text-blue-600 border-blue-300 hover:bg-blue-50'
-                  }`}
-                >
-                  Next
-                </button>
-              </div>
+              ) : (
+                query && (
+                  <div className="mt-6 text-center text-gray-500 bg-white p-8 rounded-xl shadow-md">
+                    <p className="text-lg mb-2">No events found</p>
+                    <p className="text-sm">Try searching for "tutoring", "networking", or "free food"</p>
+                  </div>
+                )
+              )
             )}
-          </div>
+          </>
         )}
 
-        {/* Commuter-focused message */}
-        {personaType === 'commuter' && !query && !results.length && !isLoading && !errorMessage && (
-          <div className="mt-8 bg-blue-50 border border-blue-100 rounded-lg p-4 text-center">
-            <h3 className="font-medium text-blue-700 mb-1">Commuter Student?</h3>
-            <p className="text-blue-600 text-sm">
-              Salt-Pepper-Ketchup helps you make the most of your time on campus by finding events, 
-              study spaces, and resources between classes.
+        {/* Commuter/Resident-focused message */}
+        {!query && !results.length && !isLoading && !errorMessage && (
+          <div className={`mt-8 border rounded-lg p-4 text-center ${
+            personaType === 'resident'
+              ? 'bg-purple-50 border-purple-100'
+              : 'bg-blue-50 border-blue-100'
+          }`}>
+            <h3 className={`font-medium mb-1 ${
+              personaType === 'resident' ? 'text-purple-700' : 'text-blue-700'
+            }`}>
+              {personaType === 'resident' ? 'Campus Resident?' : 'Commuter Student?'}
+            </h3>
+            <p className={`text-sm ${
+              personaType === 'resident' ? 'text-purple-600' : 'text-blue-600'
+            }`}>
+              {personaType === 'resident'
+                ? 'Find events happening in your residence hall and connect with other residents.'
+                : 'Salt-Pepper-Ketchup helps you make the most of your time on campus by finding events, study spaces, and resources between classes.'}
             </p>
           </div>
         )}
