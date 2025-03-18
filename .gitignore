@@ -40,3 +40,4 @@ gapi.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+gapi.json
