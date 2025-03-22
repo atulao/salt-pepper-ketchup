@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Calendar, MapPin, Heart, CalendarIcon, Share2, LinkIcon, Home, ChevronUp, ChevronDown, BookOpen, Users, Briefcase, Coffee, Sparkles } from 'lucide-react';
+import { Calendar, MapPin, Heart, CalendarIcon, Share2, LinkIcon, Home, BookOpen, Users, Briefcase, Coffee, Sparkles } from 'lucide-react';
 import { Event } from '../../types/event';
 import CampusMap from '../map/CampusMap';
 import { isResidenceLifeEvent } from '../../utils/data-fetcher';
+import EventDescription from './EventDescription';
+import EventActions from './EventActions';
 
 // Month mapping for calendar functionality
 const MONTH_MAP: Record<string, number> = {
@@ -216,28 +218,13 @@ const EventCard: React.FC<EventCardProps> = ({
               </div>
             )}
 
-            {/* Description */}
-            <div className="relative mt-1">
-              <p className={`text-gray-500 whitespace-pre-line ${
-                isDescriptionExpanded ? '' : 'line-clamp-2'
-              }`}>
-                {event.description}
-              </p>
-              
-              {/* Read more/less button */}
-              {event.description.length > 100 && (
-                <button 
-                  onClick={toggleDescription}
-                  className="mt-1 text-blue-500 text-sm font-medium flex items-center hover:text-blue-600"
-                >
-                  {isDescriptionExpanded ? (
-                    <>Show less <ChevronUp className="h-4 w-4 ml-1" /></>
-                  ) : (
-                    <>Read more <ChevronDown className="h-4 w-4 ml-1" /></>
-                  )}
-                </button>
-              )}
-            </div>
+            {/* Description - Now using the EventDescription component */}
+            <EventDescription 
+              description={event.description}
+              isExpanded={isDescriptionExpanded}
+              onToggle={toggleDescription}
+              maxLength={100}
+            />
             
             {/* Event metadata */}
             <div className="flex flex-wrap items-center mt-2 text-sm text-gray-500 gap-3">

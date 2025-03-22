@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface EventDescriptionProps {
@@ -10,6 +10,30 @@ interface EventDescriptionProps {
   maxLength?: number;
 }
 
+// Function to strip HTML tags
+const stripHtmlTags = (html: string): string => {
+  if (!html) return '';
+  
+  // Handle common HTML entities
+  const withEntitiesReplaced = html
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+    
+  // Use DOM API to strip tags (browser-only)
+  if (typeof document !== 'undefined') {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = withEntitiesReplaced;
+    return tempDiv.textContent || tempDiv.innerText || '';
+  }
+  
+  // Fallback for SSR
+  return withEntitiesReplaced.replace(/<[^>]*>/g, '');
+};
+
 const EventDescription: React.FC<EventDescriptionProps> = ({
   description,
   isExpanded = false,
@@ -17,6 +41,12 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
   maxLength = 100
 }) => {
   const [internalExpanded, setInternalExpanded] = useState(isExpanded);
+  const [cleanDescription, setCleanDescription] = useState('');
+  
+  // Clean the description when it changes
+  useEffect(() => {
+    setCleanDescription(stripHtmlTags(description));
+  }, [description]);
   
   // Use either controlled or uncontrolled state
   const expanded = onToggle ? isExpanded : internalExpanded;
@@ -29,14 +59,14 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
     }
   };
   
-  const needsToggle = description.length > maxLength;
+  const needsToggle = cleanDescription.length > maxLength;
   
   return (
     <div className="relative mt-1">
       <p className={`text-gray-500 whitespace-pre-line ${
         expanded ? '' : 'line-clamp-2'
       }`}>
-        {description}
+        {cleanDescription}
       </p>
       
       {needsToggle && (
