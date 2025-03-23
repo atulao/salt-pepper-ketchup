@@ -14,6 +14,7 @@ import { useFavorites } from '../../hooks/useFavorites';
 import { Event } from '../../types/event';
 import { FilterOption, FilterCount } from '../../types/filters';
 import { isResidenceLifeEvent } from '../../utils/data-fetcher';
+import { Tag, Info, X } from 'lucide-react';
 
 // Constants moved to separate file or kept here as needed
 const EVENTS_PER_PAGE = 5;
@@ -38,6 +39,7 @@ const CampusEngagementHub: React.FC = () => {
   const [isFocused, setIsFocused] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(true);
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
   
   // Use custom hooks to manage various states and functionalities
   const { 
@@ -81,7 +83,7 @@ const CampusEngagementHub: React.FC = () => {
     currentPage,
     loadMoreEvents,
     totalPages
-  } = useEvents(debouncedQuery, activeFilters, personaType, setErrorMessage, setHasMore);
+  } = useEvents(debouncedQuery, activeFilters, personaType, tagFilter, setErrorMessage, setHasMore);
   
   const {
     favoritedEvents,
@@ -115,6 +117,28 @@ const CampusEngagementHub: React.FC = () => {
       setFilterCounts(counts);
     }
   }, [events]);
+  
+  // Handle tag click for filtering
+  const handleTagClick = (tag: string) => {
+    console.log("Tag clicked:", tag);
+    
+    // If clicking the same tag again, remove the filter
+    if (tagFilter === tag) {
+      console.log("Clearing tag filter");
+      setTagFilter(null);
+    } else {
+      console.log("Setting tag filter to:", tag);
+      setTagFilter(tag);
+      // Scroll to top when applying a tag filter
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+  
+  // Clear tag filter
+  const clearTagFilter = () => {
+    console.log("Clearing tag filter");
+    setTagFilter(null);
+  };
   
   // Ref for infinite scroll
   const scrollSentinelRef = useRef<HTMLDivElement>(null);
@@ -173,19 +197,22 @@ const CampusEngagementHub: React.FC = () => {
         )}
       </div>
       <p className="text-lg font-medium text-amber-800 mb-2">
-        {personaType === 'resident' 
-          ? "No residence hall events found" 
-          : "No commuter events found"}
+        {message.includes("No events match") ? "No Matching Events" : 
+          personaType === 'resident' 
+            ? "No Residence Hall Events" 
+            : "No Commuter Events"}
       </p>
       <p className="text-sm text-amber-700 mb-4">{message}</p>
-      <div className="flex justify-center">
-        <button 
-          onClick={onSwitchPersona}
-          className="text-blue-600 text-sm font-medium hover:underline"
-        >
-          Switch to {personaType === 'resident' ? 'Commuter' : 'Resident'} mode instead
-        </button>
-      </div>
+      {(!message.includes("today") && !message.includes("tag")) && (
+        <div className="flex justify-center">
+          <button 
+            onClick={onSwitchPersona}
+            className="text-blue-600 text-sm font-medium hover:underline"
+          >
+            Switch to {personaType === 'resident' ? 'Commuter' : 'Resident'} mode instead
+          </button>
+        </div>
+      )}
     </div>
   );
 
@@ -193,7 +220,7 @@ const CampusEngagementHub: React.FC = () => {
     <div className="flex flex-col items-center min-h-screen bg-gray-50">
       <div className="mt-16 md:mt-24 mb-6 text-center px-4">
         <h1 className="text-4xl md:text-5xl font-bold text-blue-600 mb-3">Salt-Pepper-Ketchup</h1>
-        <p className="text-lg md:text-xl text-gray-600">Your AI campus guide for events, resources, and connections</p>
+        <p className="text-lg md:text-xl text-gray-600">Your campus guide for events, resources, and connections</p>
       </div>
 
       {/* Persona Toggle Component */}
@@ -216,7 +243,7 @@ const CampusEngagementHub: React.FC = () => {
         />
 
         {/* Example Queries */}
-        {!query && !events.length && !errorMessage && (
+        {!query && !events.length && !errorMessage && !isLoading && (
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             {EXAMPLE_QUERIES.map((example, index) => (
               <button
@@ -237,6 +264,23 @@ const CampusEngagementHub: React.FC = () => {
           onToggle={toggleFilter}
           counts={filterCounts}
         />
+
+        {/* Tag Filter Display */}
+        {tagFilter && (
+          <div className="mt-4 flex items-center justify-center">
+            <div className="inline-flex items-center bg-blue-100 text-blue-800 px-3 py-1.5 rounded-full text-sm">
+              <Tag className="h-4 w-4 mr-2" />
+              <span>Filtered by tag: <strong>{tagFilter}</strong></span>
+              <button 
+                onClick={clearTagFilter}
+                className="ml-2 text-blue-700 hover:text-blue-900"
+                aria-label="Clear tag filter"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Suggestions List Component */}
         {isFocused && query && suggestions.length > 0 && (
@@ -289,6 +333,7 @@ const CampusEngagementHub: React.FC = () => {
                 paginatedDates={paginatedDates}
                 favoritedEvents={favoritedEvents}
                 onToggleFavorite={toggleFavorite}
+                onTagClick={handleTagClick}
               />
             ) : (
               errorMessage ? (
@@ -298,7 +343,7 @@ const CampusEngagementHub: React.FC = () => {
                   onSwitchPersona={togglePersona}
                 />
               ) : (
-                query && (
+                query && !isLoading && (
                   <div className="mt-6 text-center text-gray-500 bg-white p-8 rounded-xl shadow-md">
                     <p className="text-lg mb-2">No events found</p>
                     <p className="text-sm">Try searching for "tutoring", "networking", or "free food"</p>
@@ -338,6 +383,16 @@ const CampusEngagementHub: React.FC = () => {
                 ? 'Find events happening in your residence hall and connect with other residents.'
                 : 'Salt-Pepper-Ketchup helps you make the most of your time on campus by finding events, study spaces, and resources between classes.'}
             </p>
+          </div>
+        )}
+
+        {/* About the Tag Filtering Feature */}
+        {events.length > 0 && !tagFilter && (
+          <div className="mt-6 mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg text-center text-gray-600 text-sm">
+            <div className="flex items-center justify-center">
+              <Info className="h-4 w-4 mr-2 text-gray-500" />
+              <span>Pro tip: Click on event tags to filter for similar events!</span>
+            </div>
           </div>
         )}
       </div>

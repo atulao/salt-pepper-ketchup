@@ -45,18 +45,33 @@ const TAG_COLORS: Record<string, string> = {
   'professional development': 'bg-sky-100 text-sky-800',
   'commuter': 'bg-lime-100 text-lime-800',
   'meeting': 'bg-blue-100 text-blue-800',
+  'workshop': 'bg-fuchsia-100 text-fuchsia-800',
+  'volunteer': 'bg-green-100 text-green-700',
+  'leadership': 'bg-yellow-100 text-yellow-800',
+  'diversity & inclusion': 'bg-rose-100 text-rose-800',
+  'health & wellness': 'bg-teal-100 text-teal-700',
+  'research': 'bg-blue-100 text-blue-700',
+  'stem': 'bg-cyan-100 text-cyan-700',
+  'innovation': 'bg-amber-100 text-amber-700',
+  'entrepreneurship': 'bg-orange-100 text-orange-700',
+  'graduate': 'bg-violet-100 text-violet-800',
+  'undergraduate': 'bg-indigo-100 text-indigo-800',
+  'virtual': 'bg-slate-100 text-slate-800',
+  'in-person': 'bg-emerald-100 text-emerald-800'
 };
 
 interface EventCardProps {
   event: Event;
   isFavorite: boolean;
   onToggleFavorite: (eventId: string) => void;
+  onTagClick?: (tag: string) => void;
 }
 
 const EventCard: React.FC<EventCardProps> = ({ 
   event, 
   isFavorite, 
-  onToggleFavorite 
+  onToggleFavorite,
+  onTagClick 
 }) => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(!!event.imageUrl);
@@ -142,6 +157,16 @@ const EventCard: React.FC<EventCardProps> = ({
       }
     } catch (error) {
       console.error('Error sharing event:', error);
+    }
+  };
+
+  // Handle tag click
+  const handleTagClick = (tag: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Tag clicked:", tag);
+    if (onTagClick) {
+      onTagClick(tag);
     }
   };
 
@@ -301,6 +326,10 @@ const EventCard: React.FC<EventCardProps> = ({
                   <span 
                     key={index} 
                     className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium transition-transform hover:scale-105 cursor-pointer ${getTagColorClass(tag)}`}
+                    onClick={(e) => handleTagClick(tag, e)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Filter by ${tag}`}
                   >
                     {tag}
                   </span>

@@ -17,6 +17,7 @@ export const useEvents = (
   query: string,
   activeFilters: string[],
   personaType: string,
+  tagFilter: string | null,
   setErrorMessage: (message: string | null) => void,
   setHasMore: (hasMore: boolean) => void,
   eventsPerPage = 5
@@ -28,9 +29,37 @@ export const useEvents = (
   // Fetch events data
   useEffect(() => {
     const fetchResults = async () => {
-      if (query.trim() === '' && activeFilters.length === 0) {
-        setEvents([]);
-        setErrorMessage(null);
+      // If no query, but we want to show free food by default
+      if (query.trim() === '' && activeFilters.length === 0 && !tagFilter) {
+        setIsLoading(true);
+        
+        try {
+          // Fetch all events with focus on free food
+          let allEvents = await fetchNJITEvents('');
+          
+          // Filter for free food events
+          let foodEvents = allEvents.filter(event => event.hasFood);
+          
+          // Apply persona filtering
+          if (personaType === 'resident') {
+            foodEvents = foodEvents.filter(event => isResidenceLifeEvent(event));
+          } else {
+            foodEvents = foodEvents.filter(event => !isResidenceLifeEvent(event));
+          }
+          
+          // Sort by relevance
+          foodEvents.sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
+          
+          setEvents(foodEvents);
+          setErrorMessage(null);
+          setHasMore(foodEvents.length > eventsPerPage);
+        } catch (error) {
+          console.error('Error fetching free food events:', error);
+          setEvents([]);
+          setErrorMessage('Failed to load free food events. Please try again.');
+        } finally {
+          setIsLoading(false);
+        }
         return;
       }
 
@@ -72,7 +101,85 @@ export const useEvents = (
           }
         }
         
-        // Apply any active filters
+        // Handle specific "today" queries
+        if (query.toLowerCase().includes('today')) {
+          const today = new Date();
+          const formattedToday = today.toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric'
+          });
+          
+          // Filter strictly for today's events
+          const todayEvents = filteredEvents.filter(event => 
+            event.date.includes(formattedToday)
+          );
+          
+          // If no events today, provide helpful message
+          if (todayEvents.length === 0) {
+            // Check if there are any future events matching the query (e.g., free pizza but on other days)
+            const queryWithoutToday = query.toLowerCase().replace('today', '').trim();
+            let futureEvents = allEvents.filter(event => {
+              const matchesQuery = event.title.toLowerCase().includes(queryWithoutToday) || 
+                                  event.description.toLowerCase().includes(queryWithoutToday) ||
+                                  event.tags.some(tag => tag.toLowerCase().includes(queryWithoutToday));
+              
+              // Only include future events (not today)
+              const eventDate = new Date(event.date);
+              const isInFuture = eventDate > today && !event.date.includes(formattedToday);
+              
+              return matchesQuery && isInFuture;
+            });
+            
+            // Sort future events by date (closest first)
+            futureEvents.sort((a, b) => {
+              const dateA = new Date(a.date);
+              const dateB = new Date(b.date);
+              return dateA.getTime() - dateB.getTime();
+            });
+            
+            // Limit to a few upcoming options
+            futureEvents = futureEvents.slice(0, 3);
+            
+            if (futureEvents.length > 0) {
+              // Format a message with alternatives
+              const nextEvent = futureEvents[0];
+              setErrorMessage(`No ${queryWithoutToday} available today. The next ${queryWithoutToday} event is "${nextEvent.title}" on ${nextEvent.date} at ${nextEvent.time}.`);
+              setEvents(futureEvents); // Show future events as alternatives
+            } else {
+              setErrorMessage(`No ${queryWithoutToday} events found today or in the upcoming days.`);
+              setEvents([]);
+            }
+            setIsLoading(false);
+            return;
+          } else {
+            // Use today's events as the filtered set
+            filteredEvents = todayEvents;
+          }
+        }
+        
+        // Apply tag filter if present
+        if (tagFilter) {
+          const eventsBeforeTagFilter = [...filteredEvents];
+          
+          filteredEvents = filteredEvents.filter(event => 
+            event.tags.some(tag => 
+              tag.toLowerCase() === tagFilter.toLowerCase() || 
+              tag.toLowerCase().includes(tagFilter.toLowerCase()) ||
+              tagFilter.toLowerCase().includes(tag.toLowerCase())
+            )
+          );
+          
+          if (filteredEvents.length === 0) {
+            setErrorMessage(`No events found with tag "${tagFilter}". Try a different tag.`);
+            
+            // Restore events without tag filter if none match
+            if (eventsBeforeTagFilter.length > 0) {
+              console.log(`No events match tag "${tagFilter}", showing unfiltered results`);
+            }
+          }
+        }
+        
+        // Apply category filters
         if (activeFilters.length > 0) {
           filteredEvents = filteredEvents.filter(event => {
             // Check category filters
@@ -91,12 +198,42 @@ export const useEvents = (
               return true;
             }
             
+            // Check for 'residence' filter
+            if (activeFilters.includes('residence') && isResidenceLifeEvent(event)) {
+              return true;
+            }
+            
             return false;
           });
+          
+          if (filteredEvents.length === 0) {
+            setErrorMessage('No events match your selected filters. Try adjusting your criteria.');
+          }
         }
         
         // Sort by relevance score
         filteredEvents.sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
+        
+        // Add special boost for events matching tag filter
+        if (tagFilter) {
+          filteredEvents = filteredEvents.map(event => {
+            const exactTagMatch = event.tags.some(tag => 
+              tag.toLowerCase() === tagFilter.toLowerCase()
+            );
+            
+            if (exactTagMatch) {
+              return {
+                ...event,
+                relevanceScore: Math.min(100, (event.relevanceScore || 70) + 15)
+              };
+            }
+            
+            return event;
+          });
+          
+          // Re-sort after boosting
+          filteredEvents.sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
+        }
         
         setEvents(filteredEvents);
         setErrorMessage(null);
@@ -113,7 +250,7 @@ export const useEvents = (
     };
 
     fetchResults();
-  }, [query, activeFilters, personaType, setErrorMessage, setHasMore, eventsPerPage]);
+  }, [query, activeFilters, personaType, tagFilter, setErrorMessage, setHasMore, eventsPerPage]);
 
   // Group events by date
   const groupedEvents = useMemo(() => {

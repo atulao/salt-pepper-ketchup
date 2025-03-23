@@ -10,13 +10,15 @@ interface ResultsListProps {
   paginatedDates: string[];
   favoritedEvents: { [key: string]: boolean };
   onToggleFavorite: (eventId: string) => void;
+  onTagClick?: (tag: string) => void;
 }
 
 const ResultsList: React.FC<ResultsListProps> = ({
   groupedEvents,
   paginatedDates,
   favoritedEvents,
-  onToggleFavorite
+  onToggleFavorite,
+  onTagClick
 }) => {
   return (
     <div className="mt-6">
@@ -38,6 +40,7 @@ const ResultsList: React.FC<ResultsListProps> = ({
                 event={event}
                 isFavorite={!!favoritedEvents[event.id]}
                 onToggleFavorite={onToggleFavorite}
+                onTagClick={onTagClick}
               />
             ))}
           </div>

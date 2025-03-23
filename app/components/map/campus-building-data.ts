@@ -1,3 +1,4 @@
+// app/components/map/campus-building-data.ts
 // NJIT campus building coordinates data
 export const CAMPUS_BUILDING_COORDINATES: {[key: string]: [number, number]} = {
     "Athletic Field": [40.7437887, -74.1801827],
@@ -39,6 +40,19 @@ export const CAMPUS_BUILDING_COORDINATES: {[key: string]: [number, number]} = {
     "Weston Hall": [40.7410015, -74.1774215],
     "Wellness and Events Center": [40.7423967, -74.1808465],
     
+    // Updated coordinates for Kupfrian Hall and variants
+    "Kupfrian Hall": [40.742472, -74.178944],
+    "Kupf": [40.742472, -74.178944],
+    "Kupfrian": [40.742472, -74.178944],
+    "Kupfrian Lecture Hall": [40.742472, -74.178944],
+    "Kupfrian 117": [40.742472, -74.178944],
+    "Kupfrian 118": [40.742472, -74.178944],
+    "Kupfrian 210": [40.742472, -74.178944],
+    "Kupf Hall": [40.742472, -74.178944],
+    "Kupf 117": [40.742472, -74.178944],
+    "Kupf 118": [40.742472, -74.178944],
+    "Kupf 210": [40.742472, -74.178944],
+    
     // Additional variations of building names
     "Campus Center Ballroom": [40.7430696, -74.1783678],
     "Campus Center Ballroom A": [40.7430696, -74.1783678],
@@ -56,7 +70,6 @@ export const CAMPUS_BUILDING_COORDINATES: {[key: string]: [number, number]} = {
     "Greek Residence Building 13-15": [40.7424259, -74.1784006],
     "Greek Residence Building 21-23": [40.7424259, -74.1784006],
     "Green at University Park": [40.7424259, -74.1784006],
-    "Kupfrian Hall": [40.7424259, -74.1784006],
     "Microelectronics Center": [40.7424259, -74.1784006],
     "Specht Building": [40.7424259, -74.1784006],
     "York Center": [40.7424259, -74.1784006],
@@ -86,7 +99,12 @@ export const BUILDING_NAME_ALIASES: {[key: string]: string} = {
     "NJIT CC": "Campus Center",
     "Fire Pit": "Outdoor Fire Pit",
     "Redwood Glass Lounge": "Redwood Glass Lounge",
-    "Redwood 1st Floor Lounge": "Redwood 1st Floor Lounge"
+    "Redwood 1st Floor Lounge": "Redwood 1st Floor Lounge",
+    // Add Kupfrian aliases
+    "Kupf": "Kupfrian Hall",
+    "KUPF": "Kupfrian Hall",
+    "Kupfrian": "Kupfrian Hall",
+    "KUPFRIAN": "Kupfrian Hall"
 };
 
 // Room-specific mapping for common locations
@@ -115,6 +133,11 @@ export const normalizeBuildingName = (buildingName: string): string => {
         return BUILDING_NAME_ALIASES[buildingName];
     }
     
+    // Handle Kupfrian Hall special case - check if the name contains Kupf or Kupfrian
+    if (buildingName.toLowerCase().includes('kupf')) {
+        return "Kupfrian Hall";
+    }
+    
     // Handle room number patterns like "CKB 126" (Building abbreviation + room number)
     const roomPattern = /^([A-Za-z]{1,5})\s*(\d{1,4})$/;
     const roomMatch = buildingName.match(roomPattern);
@@ -122,6 +145,11 @@ export const normalizeBuildingName = (buildingName: string): string => {
     if (roomMatch) {
         const buildingCode = roomMatch[1].toUpperCase();
         const roomNumber = roomMatch[2];
+        
+        // Special case for Kupfrian
+        if (buildingCode === "KUPF" || buildingCode === "KUPFRIAN") {
+            return "Kupfrian Hall";
+        }
         
         // Check if building code is a known alias
         if (BUILDING_NAME_ALIASES[buildingCode]) {
@@ -167,6 +195,11 @@ export const getBuildingCoordinates = (buildingName: string): [number, number] =
     // Handle empty case
     if (!buildingName) {
         return CAMPUS_BUILDING_COORDINATES["NJIT Campus"];
+    }
+    
+    // Special case for Kupfrian - check if name contains Kupf
+    if (buildingName.toLowerCase().includes('kupf')) {
+        return CAMPUS_BUILDING_COORDINATES["Kupfrian Hall"];
     }
     
     // Try exact match first
@@ -234,6 +267,12 @@ export const getBuildingCoordinates = (buildingName: string): [number, number] =
  */
 export const getDirectionsUrl = (location: string): string => {
     try {
+        // Special case for Kupfrian - check if name contains Kupf
+        if (location.toLowerCase().includes('kupf')) {
+            const coordinates = CAMPUS_BUILDING_COORDINATES["Kupfrian Hall"];
+            return `https://www.google.com/maps/dir/?api=1&destination=${coordinates[0]},${coordinates[1]}&travelmode=walking`;
+        }
+        
         // Get building coordinates from the campus data
         const normalizedLocation = normalizeBuildingName(location);
         const coordinates = getBuildingCoordinates(normalizedLocation);
