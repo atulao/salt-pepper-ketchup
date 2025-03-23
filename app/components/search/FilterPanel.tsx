@@ -57,21 +57,22 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     <div className="mt-5 flex flex-wrap gap-2 justify-center">
       {options.map(filter => {
         const count = getCount(filter.id);
+        const isActive = activeFilters.includes(filter.id);
         return (
           <button
             key={filter.id}
             onClick={() => onToggle(filter.id)}
-            className={`flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-              activeFilters.includes(filter.id)
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-100'
+            className={`flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+              isActive
+                ? 'bg-blue-600 text-white shadow-md transform scale-105'
+                : 'bg-white text-gray-700 hover:bg-gray-100 hover:scale-102'
             } border border-gray-200`}
           >
             {renderIcon(filter.icon)}
             <span>{filter.label}</span>
             {count > 0 && (
               <span className={`ml-1.5 px-1.5 py-0.5 text-xs rounded-full ${
-                activeFilters.includes(filter.id) 
+                isActive 
                   ? 'bg-blue-500 text-white' 
                   : 'bg-gray-200 text-gray-700'
               }`}>

@@ -3,6 +3,7 @@
 import React from 'react';
 import { Event } from '../../types/event';
 import EventCard from '../events/EventCard';
+import { Calendar } from 'lucide-react';
 
 interface ResultsListProps {
   groupedEvents: { [key: string]: Event[] };
@@ -22,9 +23,10 @@ const ResultsList: React.FC<ResultsListProps> = ({
       {paginatedDates.map(dateKey => (
         <div key={dateKey} className="mb-8">
           {/* Date header - sticky */}
-          <div className="sticky top-0 bg-gray-50 py-2 z-10">
-            <h2 className="text-lg font-medium text-gray-800 border-b border-gray-200 pb-2 mb-4 flex items-center">
-              {dateKey}
+          <div className="sticky top-0 bg-gray-50 py-3 z-10">
+            <h2 className="text-lg font-medium text-blue-700 border-b-2 border-blue-200 pb-2 mb-4 flex items-center">
+              <Calendar className="h-5 w-5 mr-2 text-blue-600" />
+              <span className="bg-blue-50 px-3 py-1 rounded-md">{dateKey}</span>
             </h2>
           </div>
 

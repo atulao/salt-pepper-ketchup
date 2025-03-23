@@ -19,14 +19,14 @@ const PersonaToggle: React.FC<PersonaToggleProps> = ({
       <div className="flex justify-center space-x-3">
         <button 
           onClick={() => personaType !== 'commuter' && onToggle()}
-          className={`relative px-5 py-3 rounded-xl text-sm font-medium transition-all ${
+          className={`relative px-5 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
             personaType === 'commuter' 
-              ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-300 scale-105' 
+              ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-300 scale-105 shadow-md' 
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
           {personaType === 'commuter' && (
-            <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
+            <div className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
               Active
             </div>
           )}
@@ -41,14 +41,14 @@ const PersonaToggle: React.FC<PersonaToggleProps> = ({
         
         <button 
           onClick={() => personaType !== 'resident' && onToggle()}
-          className={`relative px-5 py-3 rounded-xl text-sm font-medium transition-all ${
+          className={`relative px-5 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
             personaType === 'resident' 
-              ? 'bg-purple-100 text-purple-700 ring-2 ring-purple-300 scale-105' 
+              ? 'bg-purple-100 text-purple-700 ring-2 ring-purple-300 scale-105 shadow-md' 
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
           {personaType === 'resident' && (
-            <div className="absolute -top-2 -right-2 bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full">
+            <div className="absolute -top-2 -right-2 bg-purple-500 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
               Active
             </div>
           )}

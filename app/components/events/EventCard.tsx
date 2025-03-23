@@ -5,8 +5,10 @@ import { Calendar, MapPin, Heart, CalendarIcon, Share2, LinkIcon, Home, BookOpen
 import { Event } from '../../types/event';
 import CampusMap from '../map/CampusMap';
 import { isResidenceLifeEvent } from '../../utils/data-fetcher';
+import { getDirectionsUrl } from '../map/campus-building-data';
 import EventDescription from './EventDescription';
 import EventActions from './EventActions';
+import { formatTime } from '../../utils/formatters';
 
 // Month mapping for calendar functionality
 const MONTH_MAP: Record<string, number> = {
@@ -28,6 +30,23 @@ const CATEGORY_ICONS: CategoryIcon = {
   other: <Calendar className="h-4 w-4 mr-1 text-gray-500" />
 };
 
+// Tag color mapping
+const TAG_COLORS: Record<string, string> = {
+  'free food': 'bg-green-100 text-green-800',
+  'social': 'bg-purple-100 text-purple-800',
+  'cultural': 'bg-orange-100 text-orange-800',
+  'arts & music': 'bg-indigo-100 text-indigo-800',
+  'free stuff': 'bg-emerald-100 text-emerald-800',
+  'technology': 'bg-cyan-100 text-cyan-800',
+  'career': 'bg-amber-100 text-amber-800',
+  'academic': 'bg-blue-100 text-blue-800',
+  'networking': 'bg-teal-100 text-teal-800',
+  'competition': 'bg-pink-100 text-pink-800',
+  'professional development': 'bg-sky-100 text-sky-800',
+  'commuter': 'bg-lime-100 text-lime-800',
+  'meeting': 'bg-blue-100 text-blue-800',
+};
+
 interface EventCardProps {
   event: Event;
   isFavorite: boolean;
@@ -41,6 +60,7 @@ const EventCard: React.FC<EventCardProps> = ({
 }) => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(!!event.imageUrl);
+  const [showTooltip, setShowTooltip] = useState<string | null>(null);
 
   // Toggle description expansion
   const toggleDescription = () => {
@@ -77,10 +97,16 @@ const EventCard: React.FC<EventCardProps> = ({
       const startDate = new Date(parseInt(year), MONTH_MAP[month], parseInt(day), hour, minute);
       const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
       
+      // Strip HTML from description for clean calendar entry
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = event.description;
+      const cleanDescription = tempDiv.textContent || tempDiv.innerText || '';
+      
       // Create calendar URL
       const eventTitle = encodeURIComponent(event.title);
       const eventLocation = encodeURIComponent(event.location);
-      const eventDescription = encodeURIComponent(event.description.substring(0, 100));
+      // Use the full cleaned description, not just first 100 chars
+      const eventDescription = encodeURIComponent(cleanDescription);
       
       const startStr = startDate.toISOString().replace(/-|:|\.\d+/g, '');
       const endStr = endDate.toISOString().replace(/-|:|\.\d+/g, '');
@@ -171,9 +197,29 @@ const EventCard: React.FC<EventCardProps> = ({
       </div>
     );
   };
+  
+  // Get tag color class
+  const getTagColorClass = (tag: string) => {
+    // Find exact match or partial match
+    const exactMatch = TAG_COLORS[tag];
+    if (exactMatch) return exactMatch;
+    
+    // Try to find partial match
+    for (const [key, value] of Object.entries(TAG_COLORS)) {
+      if (tag.includes(key) || key.includes(tag)) {
+        return value;
+      }
+    }
+    
+    // Default
+    return 'bg-gray-100 text-gray-700';
+  };
+
+  // Format time to consistent format (e.g. "400 PM" to "4:00 PM")
+  const formattedTime = formatTime(event.time);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200 border border-gray-200">
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-200 border border-gray-200 transform hover:-translate-y-1">
       <div className="p-5">
         <div className="flex items-start">
           {/* Event image */}
@@ -183,7 +229,7 @@ const EventCard: React.FC<EventCardProps> = ({
 
           <div className="flex-grow">
             <div className="flex justify-between items-start">
-              <h3 className="font-medium text-lg text-gray-900">{event.title}</h3>
+              <h3 className="font-medium text-lg text-gray-900 hover:text-blue-600 transition-colors">{event.title}</h3>
               {getRelevanceIndicator()}
             </div>
 
@@ -207,8 +253,8 @@ const EventCard: React.FC<EventCardProps> = ({
                 
                 {/* Directions button */}
                 <a 
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(event.location)},NJIT,Newark,NJ`}
-                  target="_blank"
+                  href={getDirectionsUrl(event.location)}
+                  target="_blank" 
                   rel="noopener noreferrer"
                   className="mt-2 flex items-center justify-center bg-blue-50 text-blue-600 py-2 px-4 rounded-md hover:bg-blue-100 transition-colors"
                 >
@@ -227,21 +273,22 @@ const EventCard: React.FC<EventCardProps> = ({
             />
             
             {/* Event metadata */}
-            <div className="flex flex-wrap items-center mt-2 text-sm text-gray-500 gap-3">
-              <div className="flex items-center">
+            <div className="flex flex-wrap items-center mt-3 text-sm text-gray-500 gap-3">
+              <div className="flex items-center bg-gray-50 px-2 py-1 rounded">
                 <Calendar className="h-4 w-4 mr-1 text-blue-500" />
-                <span>{event.date} • {event.time}</span>
+                <span>{event.date} • {formattedTime}</span>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center bg-gray-50 px-2 py-1 rounded">
                 <MapPin className="h-4 w-4 mr-1 text-green-500" />
                 <span>{event.location}</span>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center bg-gray-50 px-2 py-1 rounded">
                 {CATEGORY_ICONS[event.category] || CATEGORY_ICONS.other}
                 <span className="capitalize">{event.category}</span>
               </div>
               {event.hasFood && (
                 <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                  <Coffee className="h-3 w-3 mr-1" />
                   {event.foodType || 'Free Food'}
                 </span>
               )}
@@ -253,7 +300,7 @@ const EventCard: React.FC<EventCardProps> = ({
                 {event.tags.map((tag, index) => (
                   <span 
                     key={index} 
-                    className="inline-block bg-gray-100 rounded-full px-2 py-0.5 text-xs text-gray-600"
+                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium transition-transform hover:scale-105 cursor-pointer ${getTagColorClass(tag)}`}
                   >
                     {tag}
                   </span>
@@ -262,52 +309,107 @@ const EventCard: React.FC<EventCardProps> = ({
             )}
             
             {/* Action buttons */}
-            <div className="mt-3 flex space-x-2">
-              <button 
-                onClick={() => onToggleFavorite(event.id)}
-                className={`flex items-center p-1.5 rounded-full ${
-                  isFavorite 
-                    ? 'text-red-500 bg-red-50 hover:bg-red-100' 
-                    : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
-                }`}
-                aria-label="Favorite"
-              >
-                <Heart className="h-4 w-4" fill={isFavorite ? 'currentColor' : 'none'} />
-              </button>
+            <div className="mt-3 flex space-x-2 border-t pt-3">
+              <div className="relative">
+                <button 
+                  onClick={() => onToggleFavorite(event.id)}
+                  className={`flex items-center p-2 rounded-full ${
+                    isFavorite 
+                      ? 'text-red-500 bg-red-50 hover:bg-red-100' 
+                      : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
+                  }`}
+                  aria-label="Favorite"
+                  onMouseEnter={() => setShowTooltip('favorite')}
+                  onMouseLeave={() => setShowTooltip(null)}
+                >
+                  <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
+                </button>
+                {showTooltip === 'favorite' && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
+                    <div className="bg-gray-800 text-white text-xs py-1 px-2 rounded">
+                      {isFavorite ? 'Remove Favorite' : 'Add to Favorites'}
+                    </div>
+                  </div>
+                )}
+              </div>
               
-              <button 
-                onClick={addToCalendar}
-                className="flex items-center p-1.5 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
-                aria-label="Add to Calendar"
-              >
-                <CalendarIcon className="h-4 w-4" />
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={addToCalendar}
+                  className="flex items-center p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
+                  aria-label="Add to Calendar"
+                  onMouseEnter={() => setShowTooltip('calendar')}
+                  onMouseLeave={() => setShowTooltip(null)}
+                >
+                  <CalendarIcon className="h-5 w-5" />
+                </button>
+                {showTooltip === 'calendar' && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
+                    <div className="bg-gray-800 text-white text-xs py-1 px-2 rounded">
+                      Add to Calendar
+                    </div>
+                  </div>
+                )}
+              </div>
               
-              <button 
-                onClick={shareEvent}
-                className="flex items-center p-1.5 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
-                aria-label="Share"
-              >
-                <Share2 className="h-4 w-4" />
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={shareEvent}
+                  className="flex items-center p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
+                  aria-label="Share"
+                  onMouseEnter={() => setShowTooltip('share')}
+                  onMouseLeave={() => setShowTooltip(null)}
+                >
+                  <Share2 className="h-5 w-5" />
+                </button>
+                {showTooltip === 'share' && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
+                    <div className="bg-gray-800 text-white text-xs py-1 px-2 rounded">
+                      Share Event
+                    </div>
+                  </div>
+                )}
+              </div>
               
-              <a 
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center p-1.5 text-gray-400 hover:text-green-500 hover:bg-gray-100 rounded-full"
-                aria-label="Get directions"
-              >
-                <MapPin className="h-4 w-4" />
-              </a>
+              <div className="relative">
+                <a 
+                  href={getDirectionsUrl(event.location)}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center p-2 text-gray-400 hover:text-green-500 hover:bg-gray-100 rounded-full"
+                  aria-label="Get directions"
+                  onMouseEnter={() => setShowTooltip('directions')}
+                  onMouseLeave={() => setShowTooltip(null)}
+                >
+                  <MapPin className="h-5 w-5" />
+                </a>
+                {showTooltip === 'directions' && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
+                    <div className="bg-gray-800 text-white text-xs py-1 px-2 rounded">
+                      Get Directions
+                    </div>
+                  </div>
+                )}
+              </div>
               
-              <button 
-                onClick={() => window.open(`/event/${event.id}`, '_blank')}
-                className="flex items-center p-1.5 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
-                aria-label="View details"
-              >
-                <LinkIcon className="h-4 w-4" />
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => window.open(`/event/${event.id}`, '_blank')}
+                  className="flex items-center p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
+                  aria-label="View details"
+                  onMouseEnter={() => setShowTooltip('details')}
+                  onMouseLeave={() => setShowTooltip(null)}
+                >
+                  <LinkIcon className="h-5 w-5" />
+                </button>
+                {showTooltip === 'details' && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
+                    <div className="bg-gray-800 text-white text-xs py-1 px-2 rounded">
+                      View Details
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
