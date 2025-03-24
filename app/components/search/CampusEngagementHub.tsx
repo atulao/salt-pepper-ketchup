@@ -66,7 +66,14 @@ const CampusEngagementHub: React.FC = () => {
   const [filterCounts, setFilterCounts] = useState<FilterCount[]>([]);
 
   // Toggle filter selection
-  const toggleFilter = useCallback((filterId: string) => {
+  const toggleFilter = useCallback((filterId: string | null) => {
+    // If filterId is null, clear all filters
+    if (filterId === null) {
+      setActiveFilters([]);
+      return;
+    }
+    
+    // Toggle filter on/off
     setActiveFilters(prev => 
       prev.includes(filterId) 
         ? prev.filter(id => id !== filterId) 

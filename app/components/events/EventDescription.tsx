@@ -62,8 +62,8 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
   const needsToggle = cleanDescription.length > maxLength;
   
   return (
-    <div className="relative mt-1">
-      <p className={`text-gray-600 leading-relaxed ${
+    <div className="relative">
+      <p className={`text-gray-600 text-sm leading-relaxed ${
         expanded ? '' : 'line-clamp-2'
       }`}>
         {cleanDescription}
@@ -72,12 +72,12 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
       {needsToggle && (
         <button 
           onClick={handleToggle}
-          className="mt-1 text-blue-500 text-sm font-medium flex items-center hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 rounded px-2 py-1"
+          className="mt-1 text-blue-500 text-xs font-medium flex items-center hover:text-blue-600 transition-colors focus:outline-none rounded"
         >
           {expanded ? (
-            <>Show less <ChevronUp className="h-4 w-4 ml-1" /></>
+            <>Show less <ChevronUp className="h-3 w-3 ml-1" /></>
           ) : (
-            <>Read more <ChevronDown className="h-4 w-4 ml-1" /></>
+            <>Read more <ChevronDown className="h-3 w-3 ml-1" /></>
           )}
         </button>
       )}

@@ -24,3 +24,267 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Enhanced card hover effects */
+.event-card-hover {
+  transition: all 0.3s ease;
+}
+
+.event-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Gradient backgrounds for events */
+.event-gradient-academic {
+  background: linear-gradient(135deg, #3b82f6 0%, #93c5fd 100%);
+}
+
+.event-gradient-social {
+  background: linear-gradient(135deg, #8b5cf6 0%, #c4b5fd 100%);
+}
+
+.event-gradient-career {
+  background: linear-gradient(135deg, #f59e0b 0%, #fcd34d 100%);
+}
+
+.event-gradient-food {
+  background: linear-gradient(135deg, #10b981 0%, #6ee7b7 100%);
+}
+
+.event-gradient-other {
+  background: linear-gradient(135deg, #64748b 0%, #cbd5e1 100%);
+}
+
+/* Animation for RSVP confirmation */
+@keyframes pulse-scale {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.rsvp-confirmed {
+  animation: pulse-scale 0.5s ease-in-out;
+}
+
+/* Calendar view styles */
+.calendar-day {
+  min-height: 5rem;
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.calendar-day:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.calendar-day-today {
+  background-color: rgba(59, 130, 246, 0.1);
+  font-weight: 600;
+}
+
+.calendar-event {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 0.25rem;
+  margin-bottom: 0.25rem;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: transform 0.2s ease;
+}
+
+.calendar-event:hover {
+  transform: translateY(-1px);
+}
+
+/* Map view styles */
+.map-pin {
+  width: 2rem;
+  height: 2rem;
+  background-color: #3b82f6;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.map-pin::after {
+  content: '';
+  width: 1rem;
+  height: 1rem;
+  background-color: white;
+  border-radius: 50%;
+  position: absolute;
+}
+
+.map-pin-pulse {
+  animation: pulse-map 2s infinite;
+}
+
+@keyframes pulse-map {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+/* Event Pass styles */
+.event-pass {
+  background-image: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.event-pass-header {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  text-align: center;
+}
+
+.event-pass-qr {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  display: inline-block;
+}
+
+/* Custom scrollbar for event lists */
+.event-list::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+.event-list::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 0.25rem;
+}
+
+.event-list::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 0.25rem;
+}
+
+.event-list::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}
+
+/* RSVP button animations */
+.rsvp-button {
+  transition: all 0.2s ease;
+}
+
+.rsvp-button:hover {
+  transform: translateY(-2px);
+}
+
+.rsvp-button:active {
+  transform: translateY(0);
+}
+
+.rsvp-button-active {
+  animation: pulse-once 0.3s ease-in-out;
+}
+
+@keyframes pulse-once {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Transition effects */
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.slide-up {
+  transform: translateY(20px);
+  opacity: 0;
+  animation: slideUp 0.4s ease forwards;
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Event type indicator dots */
+.event-type-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.event-type-academic {
+  background-color: #3b82f6;
+}
+
+.event-type-social {
+  background-color: #8b5cf6;
+}
+
+.event-type-career {
+  background-color: #f59e0b;
+}
+
+.event-type-food {
+  background-color: #10b981;
+}
+
+.event-type-other {
+  background-color: #64748b;
+}
+
+/* Custom tooltip styles */
+.custom-tooltip {
+  position: absolute;
+  z-index: 10;
+  padding: 0.5rem;
+  background-color: #1f2937;
+  color: #f9fafb;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.tooltip-trigger:hover .custom-tooltip {
+  opacity: 1;
+}

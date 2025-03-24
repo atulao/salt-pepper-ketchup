@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Coffee, BookOpen, Users, Briefcase, Clock, Home } from 'lucide-react';
+import { Coffee, BookOpen, Users, Briefcase, Clock, Home, Calendar, Filter, X } from 'lucide-react';
 
 export interface FilterOption {
   id: string;
@@ -17,7 +17,7 @@ export interface FilterCount {
 interface FilterPanelProps {
   options: FilterOption[];
   activeFilters: string[];
-  onToggle: (filterId: string) => void;
+  onToggle: (filterId: string | null) => void;  // Updated to accept null
   counts: FilterCount[];
 }
 
@@ -42,8 +42,10 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
         return <Clock className="h-4 w-4 mr-2" />;
       case 'Home':
         return <Home className="h-4 w-4 mr-2" />;
+      case 'Calendar':
+        return <Calendar className="h-4 w-4 mr-2" />;
       default:
-        return null;
+        return <Filter className="h-4 w-4 mr-2" />;
     }
   };
 
@@ -53,35 +55,126 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     return filterCount ? filterCount.count : 0;
   };
 
+  // Clear all filters function
+  const clearAllFilters = () => {
+    console.log("Clearing all filters");
+    // Pass null to indicate clearing all filters
+    onToggle(null);
+  };
+
+  // Additional date filters
+  const dateFilters = [
+    { id: 'today', label: 'Today' },
+    { id: 'tomorrow', label: 'Tomorrow' },
+    { id: 'this-week', label: 'This Week' },
+    { id: 'weekend', label: 'Weekend' }
+  ];
+
   return (
-    <div className="mt-5 flex flex-wrap gap-2 justify-center">
-      {options.map(filter => {
-        const count = getCount(filter.id);
-        const isActive = activeFilters.includes(filter.id);
-        return (
-          <button
-            key={filter.id}
-            onClick={() => onToggle(filter.id)}
-            className={`flex items-center rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
-              isActive
-                ? 'bg-blue-600 text-white shadow-md transform scale-105'
-                : 'bg-white text-gray-700 hover:bg-gray-100 hover:scale-102'
-            } border border-gray-200`}
+    <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="font-medium text-gray-800">Filter Events</h3>
+        
+        {/* Clear All Button - Fixed to properly clear all filters */}
+        {activeFilters.length > 0 && (
+          <button 
+            className="text-red-600 text-sm font-medium hover:text-red-700 flex items-center"
+            onClick={clearAllFilters}
           >
-            {renderIcon(filter.icon)}
-            <span>{filter.label}</span>
-            {count > 0 && (
-              <span className={`ml-1.5 px-1.5 py-0.5 text-xs rounded-full ${
-                isActive 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-200 text-gray-700'
-              }`}>
-                {count}
-              </span>
-            )}
+            <X className="h-3.5 w-3.5 mr-1" />
+            Clear All
           </button>
-        );
-      })}
+        )}
+      </div>
+      
+      {/* Date filters */}
+      <div className="mb-4">
+        <div className="text-sm font-medium text-gray-700 mb-2">Date</div>
+        <div className="flex flex-wrap gap-2">
+          {dateFilters.map(filter => (
+            <button 
+              key={filter.id}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+                activeFilters.includes(filter.id)
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              onClick={() => onToggle(filter.id)}
+            >
+              {filter.label}
+              {filter.id === 'today' && counts.find(c => c.id === 'today')?.count > 0 && (
+                <span className="ml-1.5 bg-blue-200 text-blue-800 rounded-full px-1.5 py-0.5 text-xs">
+                  {counts.find(c => c.id === 'today')?.count || 0}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      {/* Categories */}
+      <div className="mb-4">
+        <div className="text-sm font-medium text-gray-700 mb-2">Categories</div>
+        <div className="flex flex-wrap gap-2">
+          {options.filter(option => ['academic', 'social', 'career'].includes(option.id)).map(filter => (
+            <button
+              key={filter.id}
+              onClick={() => onToggle(filter.id)}
+              className={`flex items-center rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+                activeFilters.includes(filter.id)
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {renderIcon(filter.icon)}
+              <span>{filter.label}</span>
+              {getCount(filter.id) > 0 && (
+                <span className={`ml-1.5 px-1.5 py-0.5 text-xs rounded-full ${
+                  activeFilters.includes(filter.id) 
+                    ? 'bg-blue-200 text-blue-800' 
+                    : 'bg-gray-200 text-gray-700'
+                }`}>
+                  {getCount(filter.id)}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      {/* Event Perks */}
+      <div className="mb-4">
+        <div className="text-sm font-medium text-gray-700 mb-2">Event Perks</div>
+        <div className="flex flex-wrap gap-2">
+          {options.filter(option => ['food', 'residence'].includes(option.id)).map(filter => (
+            <button 
+              key={filter.id}
+              onClick={() => onToggle(filter.id)}
+              className={`flex items-center rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+                activeFilters.includes(filter.id)
+                  ? filter.id === 'food' 
+                    ? 'bg-green-100 text-green-700' 
+                    : 'bg-purple-100 text-purple-700'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {renderIcon(filter.icon)}
+              <span>{filter.label}</span>
+              {getCount(filter.id) > 0 && (
+                <span className={`ml-1.5 px-1.5 py-0.5 text-xs rounded-full ${
+                  activeFilters.includes(filter.id) 
+                    ? filter.id === 'food'
+                      ? 'bg-green-200 text-green-800'
+                      : 'bg-purple-200 text-purple-800' 
+                    : 'bg-gray-200 text-gray-700'
+                }`}>
+                  {getCount(filter.id)}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

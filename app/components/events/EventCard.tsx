@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Calendar, MapPin, Heart, CalendarIcon, Share2, LinkIcon, Home, BookOpen, Users, Briefcase, Coffee, Sparkles, Eye } from 'lucide-react';
+import { Calendar, MapPin, Heart, CalendarIcon, Share2, LinkIcon, Home, BookOpen, Users, Briefcase, Coffee, Sparkles, Eye, X } from 'lucide-react';
 import { Event } from '../../types/event';
 import CampusMap from '../map/CampusMap';
 import { isResidenceLifeEvent } from '../../utils/data-fetcher';
@@ -76,6 +76,7 @@ const EventCard: React.FC<EventCardProps> = ({
   const [imageLoaded, setImageLoaded] = useState(!!event.imageUrl);
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
   const [isMapVisible, setIsMapVisible] = useState(false);
+  const [rsvpStatus, setRsvpStatus] = useState<string | null>(null);
 
   // Toggle description expansion
   const toggleDescription = () => {
@@ -85,6 +86,23 @@ const EventCard: React.FC<EventCardProps> = ({
   // Handle image loading error
   const handleImageError = () => {
     setImageLoaded(false);
+  };
+
+  // Get tag color class
+  const getTagColorClass = (tag: string) => {
+    // Find exact match or partial match
+    const exactMatch = TAG_COLORS[tag];
+    if (exactMatch) return exactMatch;
+    
+    // Try to find partial match
+    for (const [key, value] of Object.entries(TAG_COLORS)) {
+      if (tag.includes(key) || key.includes(tag)) {
+        return value;
+      }
+    }
+    
+    // Default
+    return 'bg-gray-100 text-gray-700';
   };
 
   // Add to calendar functionality
@@ -195,101 +213,113 @@ const EventCard: React.FC<EventCardProps> = ({
     return null;
   };
 
-  // Render event image
-  const renderEventImage = () => {
-    if (event.imageUrl && imageLoaded) {
-      return (
-        <>
-          {/* Skeleton loader */}
-          {!imageLoaded && (
-            <div className="h-16 w-16 bg-gray-200 rounded-lg animate-pulse"></div>
-          )}
-          <img 
-            src={event.imageUrl} 
-            alt={event.title} 
-            className={`h-16 w-16 object-cover rounded-lg ${imageLoaded ? 'visible' : 'hidden'}`}
-            onLoad={() => setImageLoaded(true)}
-            onError={handleImageError}
-          />
-        </>
-      );
-    }
-    
-    return (
-      <div className="h-16 w-16 bg-gray-200 rounded-lg flex items-center justify-center">
-        <Calendar className="h-6 w-6 text-gray-400" />
-      </div>
-    );
-  };
-  
-  // Get tag color class
-  const getTagColorClass = (tag: string) => {
-    // Find exact match or partial match
-    const exactMatch = TAG_COLORS[tag];
-    if (exactMatch) return exactMatch;
-    
-    // Try to find partial match
-    for (const [key, value] of Object.entries(TAG_COLORS)) {
-      if (tag.includes(key) || key.includes(tag)) {
-        return value;
-      }
-    }
-    
-    // Default
-    return 'bg-gray-100 text-gray-700';
+  // Handle RSVP status change
+  const handleRSVP = (status: string) => {
+    setRsvpStatus(status);
+    // Here you would add API call to update RSVP
+    console.log(`RSVP updated to ${status} for event ${event.id}`);
   };
 
   // Format time to consistent format (e.g. "400 PM" to "4:00 PM")
   const formattedTime = formatTime(event.time);
 
-  // Toggle map visibility
-  const toggleMap = () => {
-    setIsMapVisible(!isMapVisible);
-  };
+  // Extract day and month from date
+  const dateParts = event.date.split(' ');
+  const day = dateParts[1].replace(',', '');
+  const month = dateParts[0].substring(0, 3);
 
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-200 border border-gray-200 transform hover:-translate-y-1">
-      <div className="p-5">
-        <div className="flex items-start">
-          {/* Event image */}
-          <div className="flex-shrink-0 mr-4 relative">
-            {renderEventImage()}
-          </div>
-
-          <div className="flex-grow">
-            <div className="flex justify-between items-start">
-              <h3 className="font-medium text-lg text-gray-900 hover:text-blue-600 transition-colors">{event.title}</h3>
-              {getRelevanceIndicator()}
+      <div className="p-4">
+        <div className="flex">
+          {/* Date Badge - Using original style */}
+          <div className="mr-4">
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-2 text-center w-16">
+              <div className="text-blue-600 font-bold text-2xl">
+                {day}
+              </div>
+              <div className="text-gray-600 text-sm font-medium">
+                {month}
+              </div>
             </div>
-
-            {/* Residence badge */}
-            {isResidenceLifeEvent(event) && (
-              <div className="mt-1 mb-2">
-                <span className="inline-flex items-center bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full">
+          </div>
+          
+          <div className="flex-1">
+            {/* Event Title */}
+            <h3 className="font-semibold text-lg text-gray-900 mb-1">{event.title}</h3>
+            
+            {/* Time and Location - Using original style with better visibility */}
+            <div className="flex items-center text-sm text-gray-600 mb-2">
+              <Calendar className="h-4 w-4 mr-1 text-blue-500" />
+              <span className="font-medium">{formattedTime}</span>
+              <span className="mx-2">•</span>
+              <MapPin className="h-4 w-4 mr-1 text-red-500" />
+              <span className="font-medium">{event.location}</span>
+            </div>
+            
+            {/* RSVP buttons */}
+            <div className="flex space-x-2 mb-3">
+              <button 
+                className={`px-4 py-1.5 text-sm font-medium rounded-md ${
+                  rsvpStatus === 'going' 
+                    ? 'bg-green-100 text-green-700 border border-green-200' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-green-50 border border-gray-200'
+                }`}
+                onClick={() => handleRSVP('going')}
+              >
+                Going
+              </button>
+              <button 
+                className={`px-4 py-1.5 text-sm font-medium rounded-md ${
+                  rsvpStatus === 'maybe' 
+                    ? 'bg-amber-100 text-amber-700 border border-amber-200' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-amber-50 border border-gray-200'
+                }`}
+                onClick={() => handleRSVP('maybe')}
+              >
+                Maybe
+              </button>
+              <button 
+                className={`px-4 py-1.5 text-sm font-medium rounded-md ${
+                  rsvpStatus === 'not-going' 
+                    ? 'bg-red-100 text-red-700 border border-red-200' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-red-50 border border-gray-200'
+                }`}
+                onClick={() => handleRSVP('not-going')}
+              >
+                Can't Go
+              </button>
+            </div>
+            
+            {/* Category badges */}
+            <div className="mb-3 flex flex-wrap gap-1">
+              <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+                {CATEGORY_ICONS[event.category] || CATEGORY_ICONS.other}
+                <span className="capitalize">{event.category}</span>
+              </span>
+              
+              {isResidenceLifeEvent(event) && (
+                <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800">
                   <Home className="h-3 w-3 mr-1" />
                   Residence Life Event
                 </span>
-              </div>
-            )}
+              )}
+              
+              {event.hasFood && (
+                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                  <Coffee className="h-3 w-3 mr-1" />
+                  {event.foodType || 'Free Food'}
+                </span>
+              )}
+            </div>
 
             {/* Map when toggled */}
             {isMapVisible && (
-              <div className="mt-3">
+              <div className="mt-3 mb-3">
                 <CampusMap 
                   location={event.location}
                   eventTitle={event.title}
                 />
-                
-                {/* Directions button */}
-                <a 
-                  href={getDirectionsUrl(event.location)}
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="mt-2 flex items-center justify-center bg-blue-50 text-blue-600 py-2 px-4 rounded-md hover:bg-blue-100 transition-colors"
-                >
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Get Directions
-                </a>
               </div>
             )}
 
@@ -301,35 +331,13 @@ const EventCard: React.FC<EventCardProps> = ({
               maxLength={100}
             />
             
-            {/* Event metadata */}
-            <div className="flex flex-wrap items-center mt-3 text-sm text-gray-500 gap-3">
-              <div className="flex items-center bg-gray-50 px-2 py-1 rounded">
-                <Calendar className="h-4 w-4 mr-1 text-blue-500" />
-                <span>{event.date} • {formattedTime}</span>
-              </div>
-              <div className="flex items-center bg-gray-50 px-2 py-1 rounded">
-                <MapPin className="h-4 w-4 mr-1 text-green-500" />
-                <span>{event.location}</span>
-              </div>
-              <div className="flex items-center bg-gray-50 px-2 py-1 rounded">
-                {CATEGORY_ICONS[event.category] || CATEGORY_ICONS.other}
-                <span className="capitalize">{event.category}</span>
-              </div>
-              {event.hasFood && (
-                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                  <Coffee className="h-3 w-3 mr-1" />
-                  {event.foodType || 'Free Food'}
-                </span>
-              )}
-            </div>
-            
             {/* Tags */}
             {event.tags && event.tags.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-1">
+              <div className="mt-3 flex flex-wrap gap-1">
                 {event.tags.map((tag, index) => (
                   <span 
                     key={index} 
-                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium transition-transform hover:scale-105 cursor-pointer ${getTagColorClass(tag)}`}
+                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium cursor-pointer hover:bg-gray-200 ${getTagColorClass(tag)}`}
                     onClick={(e) => handleTagClick(tag, e)}
                     role="button"
                     tabIndex={0}
@@ -340,139 +348,71 @@ const EventCard: React.FC<EventCardProps> = ({
                 ))}
               </div>
             )}
+          </div>
+        </div>
+        
+        {/* Action buttons */}
+        <div className="mt-3 flex justify-between items-center pt-3 border-t">
+          <div className="flex space-x-2">
+            <button 
+              onClick={() => onToggleFavorite(event.id)}
+              className={`p-2 rounded-full ${
+                isFavorite 
+                  ? 'text-red-500 bg-red-50' 
+                  : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
+              }`}
+              aria-label="Favorite"
+            >
+              <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
+            </button>
             
-            {/* Action buttons */}
-            <div className="mt-3 flex flex-wrap gap-2 border-t pt-3">
-              {/* Favorite button */}
-              <div className="relative">
-                <button 
-                  onClick={() => onToggleFavorite(event.id)}
-                  className={`flex items-center p-2 rounded-full ${
-                    isFavorite 
-                      ? 'text-red-500 bg-red-50 hover:bg-red-100' 
-                      : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
-                  }`}
-                  aria-label="Favorite"
-                  onMouseEnter={() => setShowTooltip('favorite')}
-                  onMouseLeave={() => setShowTooltip(null)}
-                >
-                  <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
-                </button>
-                {showTooltip === 'favorite' && (
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
-                    <div className="bg-gray-800 text-white text-xs py-1 px-2 rounded">
-                      {isFavorite ? 'Remove Favorite' : 'Add to Favorites'}
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Add to Calendar button */}
-              <div className="relative">
-                <button 
-                  onClick={addToCalendar}
-                  className="flex items-center p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
-                  aria-label="Add to Calendar"
-                  onMouseEnter={() => setShowTooltip('calendar')}
-                  onMouseLeave={() => setShowTooltip(null)}
-                >
-                  <CalendarIcon className="h-5 w-5" />
-                </button>
-                {showTooltip === 'calendar' && (
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
-                    <div className="bg-gray-800 text-white text-xs py-1 px-2 rounded">
-                      Add to Calendar
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Share button */}
-              <div className="relative">
-                <button 
-                  onClick={shareEvent}
-                  className="flex items-center p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
-                  aria-label="Share"
-                  onMouseEnter={() => setShowTooltip('share')}
-                  onMouseLeave={() => setShowTooltip(null)}
-                >
-                  <Share2 className="h-5 w-5" />
-                </button>
-                {showTooltip === 'share' && (
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
-                    <div className="bg-gray-800 text-white text-xs py-1 px-2 rounded">
-                      Share Event
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Map toggle button */}
-              <div className="relative">
-                <button 
-                  onClick={toggleMap}
-                  className={`flex items-center p-2 rounded-full ${
-                    isMapVisible 
-                      ? 'text-green-500 bg-green-50 hover:bg-green-100' 
-                      : 'text-gray-400 hover:text-green-500 hover:bg-gray-100'
-                  }`}
-                  aria-label="Toggle map"
-                  onMouseEnter={() => setShowTooltip('map')}
-                  onMouseLeave={() => setShowTooltip(null)}
-                >
-                  <Eye className="h-5 w-5" />
-                </button>
-                {showTooltip === 'map' && (
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
-                    <div className="bg-gray-800 text-white text-xs py-1 px-2 rounded">
-                      {isMapVisible ? 'Hide Map' : 'Show Map'}
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Get directions link */}
-              <div className="relative">
-                <a 
-                  href={getDirectionsUrl(event.location)}
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center p-2 text-gray-400 hover:text-green-500 hover:bg-gray-100 rounded-full"
-                  aria-label="Get directions"
-                  onMouseEnter={() => setShowTooltip('directions')}
-                  onMouseLeave={() => setShowTooltip(null)}
-                >
-                  <MapPin className="h-5 w-5" />
-                </a>
-                {showTooltip === 'directions' && (
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
-                    <div className="bg-gray-800 text-white text-xs py-1 px-2 rounded">
-                      Get Directions
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {/* View details button */}
-              <div className="relative">
-                <button 
-                  onClick={() => window.open(`/event/${event.id}`, '_blank')}
-                  className="flex items-center p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
-                  aria-label="View details"
-                  onMouseEnter={() => setShowTooltip('details')}
-                  onMouseLeave={() => setShowTooltip(null)}
-                >
-                  <LinkIcon className="h-5 w-5" />
-                </button>
-                {showTooltip === 'details' && (
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
-                    <div className="bg-gray-800 text-white text-xs py-1 px-2 rounded">
-                      View Details
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <button
+              onClick={() => setIsMapVisible(!isMapVisible)}
+              className={`p-2 rounded-full ${
+                isMapVisible 
+                  ? 'text-blue-500 bg-blue-50' 
+                  : 'text-gray-400 hover:text-blue-500 hover:bg-gray-100'
+              }`}
+              aria-label="Toggle map"
+            >
+              <Eye className="h-5 w-5" />
+            </button>
+            
+            <a 
+              href={getDirectionsUrl(event.location)}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="p-2 text-gray-400 hover:text-green-500 hover:bg-gray-100 rounded-full"
+              aria-label="Get directions"
+            >
+              <MapPin className="h-5 w-5" />
+            </a>
+          </div>
+          
+          <div className="flex space-x-2">
+            <button 
+              onClick={addToCalendar}
+              className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
+              aria-label="Add to Calendar"
+            >
+              <CalendarIcon className="h-5 w-5" />
+            </button>
+            
+            <button 
+              onClick={shareEvent}
+              className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
+              aria-label="Share"
+            >
+              <Share2 className="h-5 w-5" />
+            </button>
+            
+            <button 
+              onClick={() => window.open(`/event/${event.id}`, '_blank')}
+              className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
+              aria-label="View details"
+            >
+              <LinkIcon className="h-5 w-5" />
+            </button>
           </div>
         </div>
       </div>
