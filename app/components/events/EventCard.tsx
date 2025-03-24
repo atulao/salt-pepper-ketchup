@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Calendar, MapPin, Heart, CalendarIcon, Share2, LinkIcon, Home, BookOpen, Users, Briefcase, Coffee, Sparkles } from 'lucide-react';
+import { Calendar, MapPin, Heart, CalendarIcon, Share2, LinkIcon, Home, BookOpen, Users, Briefcase, Coffee, Sparkles, Eye } from 'lucide-react';
 import { Event } from '../../types/event';
 import CampusMap from '../map/CampusMap';
 import { isResidenceLifeEvent } from '../../utils/data-fetcher';
 import { getDirectionsUrl } from '../map/campus-building-data';
 import EventDescription from './EventDescription';
-import EventActions from './EventActions';
 import { formatTime } from '../../utils/formatters';
 
 // Month mapping for calendar functionality
@@ -76,6 +75,7 @@ const EventCard: React.FC<EventCardProps> = ({
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(!!event.imageUrl);
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
+  const [isMapVisible, setIsMapVisible] = useState(false);
 
   // Toggle description expansion
   const toggleDescription = () => {
@@ -120,7 +120,6 @@ const EventCard: React.FC<EventCardProps> = ({
       // Create calendar URL
       const eventTitle = encodeURIComponent(event.title);
       const eventLocation = encodeURIComponent(event.location);
-      // Use the full cleaned description, not just first 100 chars
       const eventDescription = encodeURIComponent(cleanDescription);
       
       const startStr = startDate.toISOString().replace(/-|:|\.\d+/g, '');
@@ -243,6 +242,11 @@ const EventCard: React.FC<EventCardProps> = ({
   // Format time to consistent format (e.g. "400 PM" to "4:00 PM")
   const formattedTime = formatTime(event.time);
 
+  // Toggle map visibility
+  const toggleMap = () => {
+    setIsMapVisible(!isMapVisible);
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-200 border border-gray-200 transform hover:-translate-y-1">
       <div className="p-5">
@@ -268,8 +272,8 @@ const EventCard: React.FC<EventCardProps> = ({
               </div>
             )}
 
-            {/* Map (when expanded) */}
-            {isDescriptionExpanded && (
+            {/* Map when toggled */}
+            {isMapVisible && (
               <div className="mt-3">
                 <CampusMap 
                   location={event.location}
@@ -289,7 +293,7 @@ const EventCard: React.FC<EventCardProps> = ({
               </div>
             )}
 
-            {/* Description - Now using the EventDescription component */}
+            {/* Description component */}
             <EventDescription 
               description={event.description}
               isExpanded={isDescriptionExpanded}
@@ -338,7 +342,8 @@ const EventCard: React.FC<EventCardProps> = ({
             )}
             
             {/* Action buttons */}
-            <div className="mt-3 flex space-x-2 border-t pt-3">
+            <div className="mt-3 flex flex-wrap gap-2 border-t pt-3">
+              {/* Favorite button */}
               <div className="relative">
                 <button 
                   onClick={() => onToggleFavorite(event.id)}
@@ -362,6 +367,7 @@ const EventCard: React.FC<EventCardProps> = ({
                 )}
               </div>
               
+              {/* Add to Calendar button */}
               <div className="relative">
                 <button 
                   onClick={addToCalendar}
@@ -381,6 +387,7 @@ const EventCard: React.FC<EventCardProps> = ({
                 )}
               </div>
               
+              {/* Share button */}
               <div className="relative">
                 <button 
                   onClick={shareEvent}
@@ -400,6 +407,31 @@ const EventCard: React.FC<EventCardProps> = ({
                 )}
               </div>
               
+              {/* Map toggle button */}
+              <div className="relative">
+                <button 
+                  onClick={toggleMap}
+                  className={`flex items-center p-2 rounded-full ${
+                    isMapVisible 
+                      ? 'text-green-500 bg-green-50 hover:bg-green-100' 
+                      : 'text-gray-400 hover:text-green-500 hover:bg-gray-100'
+                  }`}
+                  aria-label="Toggle map"
+                  onMouseEnter={() => setShowTooltip('map')}
+                  onMouseLeave={() => setShowTooltip(null)}
+                >
+                  <Eye className="h-5 w-5" />
+                </button>
+                {showTooltip === 'map' && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 -translate-y-1 z-10">
+                    <div className="bg-gray-800 text-white text-xs py-1 px-2 rounded">
+                      {isMapVisible ? 'Hide Map' : 'Show Map'}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Get directions link */}
               <div className="relative">
                 <a 
                   href={getDirectionsUrl(event.location)}
@@ -421,6 +453,7 @@ const EventCard: React.FC<EventCardProps> = ({
                 )}
               </div>
               
+              {/* View details button */}
               <div className="relative">
                 <button 
                   onClick={() => window.open(`/event/${event.id}`, '_blank')}

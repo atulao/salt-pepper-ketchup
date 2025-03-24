@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Heart, Calendar as CalendarIcon, Share2, MapPin, Link as LinkIcon } from 'lucide-react';
+import { Heart, Calendar as CalendarIcon, Share2, MapPin, Link as LinkIcon, Eye } from 'lucide-react';
+import { getDirectionsUrl } from '../map/campus-building-data';
 
 interface EventActionsProps {
   eventId: string;
@@ -10,6 +11,7 @@ interface EventActionsProps {
   onToggleFavorite: (eventId: string) => void;
   onAddToCalendar: () => void;
   onShare: () => void;
+  onViewMap?: () => void;
 }
 
 const EventActions: React.FC<EventActionsProps> = ({
@@ -18,14 +20,15 @@ const EventActions: React.FC<EventActionsProps> = ({
   isFavorite,
   onToggleFavorite,
   onAddToCalendar,
-  onShare
+  onShare,
+  onViewMap
 }) => {
   return (
-    <div className="mt-3 flex space-x-2">
+    <div className="mt-3 flex flex-wrap gap-2">
       {/* Favorite button */}
       <button 
         onClick={() => onToggleFavorite(eventId)}
-        className={`flex items-center p-1.5 rounded-full ${
+        className={`flex items-center p-2 rounded-full ${
           isFavorite 
             ? 'text-red-500 bg-red-50 hover:bg-red-100' 
             : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
@@ -38,7 +41,7 @@ const EventActions: React.FC<EventActionsProps> = ({
       {/* Add to Calendar button */}
       <button 
         onClick={onAddToCalendar}
-        className="flex items-center p-1.5 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
+        className="flex items-center p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
         aria-label="Add to Calendar"
       >
         <CalendarIcon className="h-4 w-4" />
@@ -47,18 +50,27 @@ const EventActions: React.FC<EventActionsProps> = ({
       {/* Share button */}
       <button 
         onClick={onShare}
-        className="flex items-center p-1.5 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
+        className="flex items-center p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
         aria-label="Share"
       >
         <Share2 className="h-4 w-4" />
       </button>
       
+      {/* View map button */}
+      <button 
+        onClick={onViewMap}
+        className="flex items-center p-2 text-gray-400 hover:text-green-500 hover:bg-gray-100 rounded-full"
+        aria-label="View map"
+      >
+        <Eye className="h-4 w-4" />
+      </button>
+      
       {/* Get directions link */}
       <a 
-        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
+        href={getDirectionsUrl(location)}
         target="_blank" 
         rel="noopener noreferrer"
-        className="flex items-center p-1.5 text-gray-400 hover:text-green-500 hover:bg-gray-100 rounded-full"
+        className="flex items-center p-2 text-gray-400 hover:text-green-500 hover:bg-gray-100 rounded-full"
         aria-label="Get directions"
       >
         <MapPin className="h-4 w-4" />
@@ -67,7 +79,7 @@ const EventActions: React.FC<EventActionsProps> = ({
       {/* View details button */}
       <button 
         onClick={() => window.open(`/event/${eventId}`, '_blank')}
-        className="flex items-center p-1.5 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
+        className="flex items-center p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
         aria-label="View details"
       >
         <LinkIcon className="h-4 w-4" />
