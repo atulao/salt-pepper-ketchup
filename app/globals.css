@@ -288,3 +288,58 @@ body {
 .tooltip-trigger:hover .custom-tooltip {
   opacity: 1;
 }
+
+/* New styles for clickable category badges */
+.category-badge {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.category-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Make sure event cards have consistent spacing */
+.event-card {
+  margin-bottom: 1rem;
+}
+
+/* Organization name styling */
+.organization-name {
+  color: #666;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Consistent hover effects for all clickable tags */
+.tag-clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tag-clickable:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.95);
+}
+
+/* Visual indicator for clickable elements */
+.clickable {
+  position: relative;
+}
+
+.clickable::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.clickable:hover::after {
+  opacity: 0.5;
+}

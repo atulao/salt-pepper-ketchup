@@ -14,7 +14,7 @@ import { useFavorites } from '../../hooks/useFavorites';
 import { Event } from '../../types/event';
 import { FilterOption, FilterCount } from '../../types/filters';
 import { isResidenceLifeEvent } from '../../utils/data-fetcher';
-import { Tag, Info, X } from 'lucide-react';
+import { Tag, Info, X, User } from 'lucide-react';
 
 // Constants moved to separate file or kept here as needed
 const EVENTS_PER_PAGE = 5;
@@ -37,9 +37,8 @@ const FILTER_OPTIONS: FilterOption[] = [
 
 const CampusEngagementHub: React.FC = () => {
   const [isFocused, setIsFocused] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState<boolean>(true);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [orgFilter, setOrgFilter] = useState<string | null>(null);
   
   // Use custom hooks to manage various states and functionalities
   const { 
@@ -81,6 +80,7 @@ const CampusEngagementHub: React.FC = () => {
     );
   }, []);
   
+  // Use the updated hook with the correct parameters
   const {
     events,
     isLoading,
@@ -89,8 +89,11 @@ const CampusEngagementHub: React.FC = () => {
     paginatedDates,
     currentPage,
     loadMoreEvents,
-    totalPages
-  } = useEvents(debouncedQuery, activeFilters, personaType, tagFilter, setErrorMessage, setHasMore);
+    totalPages,
+    hasMore,
+    errorMessage,
+    setErrorMessage
+  } = useEvents(debouncedQuery, activeFilters, personaType, tagFilter, orgFilter, EVENTS_PER_PAGE);
   
   const {
     favoritedEvents,
@@ -141,10 +144,32 @@ const CampusEngagementHub: React.FC = () => {
     }
   };
   
+  // Handle organization click for filtering
+  const handleOrgClick = (organization: string) => {
+    console.log("Organization clicked:", organization);
+    
+    // If clicking the same organization again, remove the filter
+    if (orgFilter === organization) {
+      console.log("Clearing organization filter");
+      setOrgFilter(null);
+    } else {
+      console.log("Setting organization filter to:", organization);
+      setOrgFilter(organization);
+      // Scroll to top when applying an organization filter
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+  
   // Clear tag filter
   const clearTagFilter = () => {
     console.log("Clearing tag filter");
     setTagFilter(null);
+  };
+  
+  // Clear organization filter
+  const clearOrgFilter = () => {
+    console.log("Clearing organization filter");
+    setOrgFilter(null);
   };
   
   // Ref for infinite scroll
@@ -210,7 +235,7 @@ const CampusEngagementHub: React.FC = () => {
             : "No Commuter Events"}
       </p>
       <p className="text-sm text-amber-700 mb-4">{message}</p>
-      {(!message.includes("today") && !message.includes("tag")) && (
+      {(!message.includes("today") && !message.includes("tag") && !message.includes("organization")) && (
         <div className="flex justify-center">
           <button 
             onClick={onSwitchPersona}
@@ -289,6 +314,23 @@ const CampusEngagementHub: React.FC = () => {
           </div>
         )}
 
+        {/* Organization Filter Display */}
+        {orgFilter && (
+          <div className="mt-4 flex items-center justify-center">
+            <div className="inline-flex items-center bg-indigo-100 text-indigo-800 px-3 py-1.5 rounded-full text-sm">
+              <User className="h-4 w-4 mr-2" />
+              <span>Events by: <strong>{orgFilter}</strong></span>
+              <button 
+                onClick={clearOrgFilter}
+                className="ml-2 text-indigo-700 hover:text-indigo-900"
+                aria-label="Clear organization filter"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Suggestions List Component */}
         {isFocused && query && suggestions.length > 0 && (
           <SuggestionsList
@@ -341,6 +383,7 @@ const CampusEngagementHub: React.FC = () => {
                 favoritedEvents={favoritedEvents}
                 onToggleFavorite={toggleFavorite}
                 onTagClick={handleTagClick}
+                onOrgClick={handleOrgClick}
               />
             ) : (
               errorMessage ? (
@@ -394,11 +437,11 @@ const CampusEngagementHub: React.FC = () => {
         )}
 
         {/* About the Tag Filtering Feature */}
-        {events.length > 0 && !tagFilter && (
+        {events.length > 0 && !tagFilter && !orgFilter && (
           <div className="mt-6 mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg text-center text-gray-600 text-sm">
             <div className="flex items-center justify-center">
               <Info className="h-4 w-4 mr-2 text-gray-500" />
-              <span>Pro tip: Click on event tags to filter for similar events!</span>
+              <span>Pro tip: Click on event tags or organization names to filter for similar events!</span>
             </div>
           </div>
         )}

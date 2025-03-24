@@ -40,10 +40,14 @@ export async function GET(request: Request) {
   const query = searchParams.get('q')?.toLowerCase() || '';
   const filters = searchParams.get('filters')?.split(',') || [];
   const persona = searchParams.get('persona') || 'commuter';
+  const tagFilter = searchParams.get('tag') || null;
+  const orgFilter = searchParams.get('organization') || null;
 
   console.log("API call made with query:", query);
   console.log("Filters:", filters);
   console.log("Persona:", persona);
+  console.log("Tag filter:", tagFilter);
+  console.log("Organization filter:", orgFilter);
 
   try {
     // Fetch real events from NJIT API
@@ -84,6 +88,37 @@ export async function GET(request: Request) {
       });
       
       console.log("After filtering:", events.length, "events remaining");
+    }
+
+    // Apply tag filter if present
+    if (tagFilter) {
+      events = events.filter(event => 
+        event.tags.some(tag => 
+          tag.toLowerCase().includes(tagFilter.toLowerCase()) || 
+          tagFilter.toLowerCase().includes(tag.toLowerCase())
+        )
+      );
+      
+      if (events.length === 0) {
+        return NextResponse.json({ 
+          events: [], 
+          message: `No events found with tag "${tagFilter}". Try a different filter.` 
+        });
+      }
+    }
+    
+    // Apply organization filter if present
+    if (orgFilter) {
+      events = events.filter(event => 
+        event.organizerName.toLowerCase().includes(orgFilter.toLowerCase())
+      );
+      
+      if (events.length === 0) {
+        return NextResponse.json({ 
+          events: [], 
+          message: `No events found for organization "${orgFilter}". Try a different filter.` 
+        });
+      }
     }
 
     // If filtering resulted in no events, return empty array with message

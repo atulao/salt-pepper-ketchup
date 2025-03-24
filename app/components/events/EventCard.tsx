@@ -1,7 +1,8 @@
+// app/components/events/EventCard.tsx
 'use client';
 
 import React, { useState } from 'react';
-import { Calendar, MapPin, Heart, CalendarIcon, Share2, LinkIcon, Home, BookOpen, Users, Briefcase, Coffee, Sparkles, Eye, X } from 'lucide-react';
+import { Calendar, MapPin, Heart, CalendarIcon, Share2, LinkIcon, Home, BookOpen, Users, Briefcase, Coffee, Sparkles, Eye, X, User, Users2 } from 'lucide-react';
 import { Event } from '../../types/event';
 import CampusMap from '../map/CampusMap';
 import { isResidenceLifeEvent } from '../../utils/data-fetcher';
@@ -56,7 +57,9 @@ const TAG_COLORS: Record<string, string> = {
   'graduate': 'bg-violet-100 text-violet-800',
   'undergraduate': 'bg-indigo-100 text-indigo-800',
   'virtual': 'bg-slate-100 text-slate-800',
-  'in-person': 'bg-emerald-100 text-emerald-800'
+  'in-person': 'bg-emerald-100 text-emerald-800',
+  // Add organization color
+  'organization': 'bg-gray-100 text-gray-800'
 };
 
 interface EventCardProps {
@@ -64,19 +67,25 @@ interface EventCardProps {
   isFavorite: boolean;
   onToggleFavorite: (eventId: string) => void;
   onTagClick?: (tag: string) => void;
+  onOrgClick?: (organization: string) => void; // New prop for organization filtering
 }
 
 const EventCard: React.FC<EventCardProps> = ({ 
   event, 
   isFavorite, 
   onToggleFavorite,
-  onTagClick 
+  onTagClick,
+  onOrgClick = onTagClick // Default to using onTagClick if onOrgClick not provided
 }) => {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(!!event.imageUrl);
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
   const [isMapVisible, setIsMapVisible] = useState(false);
   const [rsvpStatus, setRsvpStatus] = useState<string | null>(null);
+
+  // Parse multiple organizations if applicable
+  const organizations = event.organizerName.split(/,\s*|\s+and\s+|\s*&\s*/).filter(Boolean);
+  const hasMultipleOrgs = organizations.length > 1;
 
   // Toggle description expansion
   const toggleDescription = () => {
@@ -103,6 +112,16 @@ const EventCard: React.FC<EventCardProps> = ({
     
     // Default
     return 'bg-gray-100 text-gray-700';
+  };
+
+  // Handle organization click
+  const handleOrgClick = (org: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Organization clicked:", org);
+    if (onOrgClick) {
+      onOrgClick(org);
+    }
   };
 
   // Add to calendar functionality
@@ -248,6 +267,30 @@ const EventCard: React.FC<EventCardProps> = ({
             {/* Event Title */}
             <h3 className="font-semibold text-lg text-gray-900 mb-1">{event.title}</h3>
             
+            {/* Organization Name(s) - MODIFIED for multiple orgs & clickable */}
+            <div className="flex items-center text-sm text-gray-700 mb-2">
+              {hasMultipleOrgs ? (
+                <Users2 className="h-4 w-4 mr-1 text-gray-500" />
+              ) : (
+                <User className="h-4 w-4 mr-1 text-gray-500" />
+              )}
+              <div className="flex flex-wrap items-center">
+                {organizations.map((org, index) => (
+                  <React.Fragment key={index}>
+                    <button 
+                      className="font-medium text-gray-700 hover:text-blue-600 tag-clickable"
+                      onClick={(e) => handleOrgClick(org, e)}
+                    >
+                      {org}
+                    </button>
+                    {index < organizations.length - 1 && (
+                      <span className="mx-1 text-gray-400">•</span>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+            
             {/* Time and Location - Using original style with better visibility */}
             <div className="flex items-center text-sm text-gray-600 mb-2">
               <Calendar className="h-4 w-4 mr-1 text-blue-500" />
@@ -291,25 +334,34 @@ const EventCard: React.FC<EventCardProps> = ({
               </button>
             </div>
             
-            {/* Category badges */}
+            {/* Category badges - MODIFIED to be clickable */}
             <div className="mb-3 flex flex-wrap gap-1">
-              <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+              <button 
+                className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 cursor-pointer hover:bg-blue-200"
+                onClick={(e) => handleTagClick(event.category, e)}
+              >
                 {CATEGORY_ICONS[event.category] || CATEGORY_ICONS.other}
                 <span className="capitalize">{event.category}</span>
-              </span>
+              </button>
               
               {isResidenceLifeEvent(event) && (
-                <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800">
+                <button 
+                  className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 cursor-pointer hover:bg-purple-200"
+                  onClick={(e) => handleTagClick('residence', e)}
+                >
                   <Home className="h-3 w-3 mr-1" />
                   Residence Life Event
-                </span>
+                </button>
               )}
               
               {event.hasFood && (
-                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                <button 
+                  className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 cursor-pointer hover:bg-green-200"
+                  onClick={(e) => handleTagClick('free food', e)}
+                >
                   <Coffee className="h-3 w-3 mr-1" />
                   {event.foodType || 'Free Food'}
-                </span>
+                </button>
               )}
             </div>
 
@@ -331,23 +383,6 @@ const EventCard: React.FC<EventCardProps> = ({
               maxLength={100}
             />
             
-            {/* Tags */}
-            {event.tags && event.tags.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1">
-                {event.tags.map((tag, index) => (
-                  <span 
-                    key={index} 
-                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium cursor-pointer hover:bg-gray-200 ${getTagColorClass(tag)}`}
-                    onClick={(e) => handleTagClick(tag, e)}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Filter by ${tag}`}
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
         </div>
         

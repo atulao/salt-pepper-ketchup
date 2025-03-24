@@ -16,27 +16,42 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
  * Determines if an event is residence life related based on content and metadata
  */
 export const isResidenceLifeEvent = (event: Event): boolean => {
-  // Check for residence-related keywords in various fields
-  const residenceKeywords = ['residence', 'housing', 'dorm', 'hall council', 'ra ', 'resident assistant'];
+  // List of residence hall locations
+  const residenceLocations = [
+    'cypress residence hall', 'cypress hall',
+    'laurel residence hall', 'laurel hall', 'laurel extension',
+    'oak residence hall', 'oak hall',
+    'redwood residence hall', 'redwood hall', 'redwood glass lounge', 'redwood 1st floor lounge',
+    'maple hall', 'maple kitchen', 'maple hall club room', 'maple club room',
+    'martinson honors residence hall', 'honors residence',
+    'warren street village', 'greek residence', 'dormitory'
+  ];
+  
+  // Check if the event is in a residence hall location
+  if (residenceLocations.some(loc => event.location.toLowerCase().includes(loc))) {
+    return true;
+  }
   
   // Check if the event is from Residence Life organization
   if (event.organizerName?.toLowerCase().includes('residence life')) {
     return true;
   }
   
+  // Check residence-related keywords in various fields
+  const residenceKeywords = ['residence', 'housing', 'dorm', 'hall council', 'ra ', 'resident assistant'];
+  
   // Check if the event has residence-related tags
   if (event.tags.some(tag => residenceKeywords.some(keyword => tag.toLowerCase().includes(keyword)))) {
     return true;
   }
   
-  // Check if the event is in a residence hall
-  const residenceLocations = ['oak hall', 'laurel hall', 'cypress hall', 'redwood hall'];
-  if (residenceLocations.some(loc => event.location.toLowerCase().includes(loc))) {
+  // Check the description for residence-specific content
+  if (residenceKeywords.some(keyword => event.description.toLowerCase().includes(keyword) && 
+     !event.description.toLowerCase().includes('commuter'))) {
     return true;
   }
   
-  // Check the description for residence-specific content
-  return residenceKeywords.some(keyword => event.description.toLowerCase().includes(keyword));
+  return false;
 };
 
 /**

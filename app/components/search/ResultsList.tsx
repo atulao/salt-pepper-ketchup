@@ -11,6 +11,7 @@ interface ResultsListProps {
   favoritedEvents: { [key: string]: boolean };
   onToggleFavorite: (eventId: string) => void;
   onTagClick?: (tag: string) => void;
+  onOrgClick?: (organization: string) => void; // Added prop for organization filtering
 }
 
 const ResultsList: React.FC<ResultsListProps> = ({
@@ -18,7 +19,8 @@ const ResultsList: React.FC<ResultsListProps> = ({
   paginatedDates,
   favoritedEvents,
   onToggleFavorite,
-  onTagClick
+  onTagClick,
+  onOrgClick
 }) => {
   return (
     <div className="mt-6">
@@ -41,6 +43,7 @@ const ResultsList: React.FC<ResultsListProps> = ({
                 isFavorite={!!favoritedEvents[event.id]}
                 onToggleFavorite={onToggleFavorite}
                 onTagClick={onTagClick}
+                onOrgClick={onOrgClick}
               />
             ))}
           </div>
