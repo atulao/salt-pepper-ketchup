@@ -62,13 +62,18 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     onToggle(null);
   };
 
-  // Additional date filters
-  const dateFilters = [
-    { id: 'today', label: 'Today' },
-    { id: 'tomorrow', label: 'Tomorrow' },
-    { id: 'this-week', label: 'This Week' },
-    { id: 'weekend', label: 'Weekend' }
-  ];
+  // Group filter options by categories
+  const dateFilters = options.filter(option => 
+    ['today', 'tomorrow', 'this-week', 'weekend'].includes(option.id)
+  );
+  
+  const categoryFilters = options.filter(option => 
+    ['academic', 'social', 'career'].includes(option.id)
+  );
+  
+  const perksFilters = options.filter(option => 
+    ['food', 'residence'].includes(option.id)
+  );
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
@@ -94,17 +99,22 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
           {dateFilters.map(filter => (
             <button 
               key={filter.id}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md ${
+              className={`flex items-center px-3 py-1.5 text-sm font-medium rounded-md ${
                 activeFilters.includes(filter.id)
                   ? 'bg-blue-100 text-blue-700'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
               onClick={() => onToggle(filter.id)}
             >
-              {filter.label}
-              {filter.id === 'today' && counts.find(c => c.id === 'today')?.count > 0 && (
-                <span className="ml-1.5 bg-blue-200 text-blue-800 rounded-full px-1.5 py-0.5 text-xs">
-                  {counts.find(c => c.id === 'today')?.count || 0}
+              {renderIcon(filter.icon)}
+              <span>{filter.label}</span>
+              {getCount(filter.id) > 0 && (
+                <span className={`ml-1.5 px-1.5 py-0.5 text-xs rounded-full ${
+                  activeFilters.includes(filter.id) 
+                    ? 'bg-blue-200 text-blue-800' 
+                    : 'bg-gray-200 text-gray-700'
+                }`}>
+                  {getCount(filter.id)}
                 </span>
               )}
             </button>
@@ -116,7 +126,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       <div className="mb-4">
         <div className="text-sm font-medium text-gray-700 mb-2">Categories</div>
         <div className="flex flex-wrap gap-2">
-          {options.filter(option => ['academic', 'social', 'career'].includes(option.id)).map(filter => (
+          {categoryFilters.map(filter => (
             <button
               key={filter.id}
               onClick={() => onToggle(filter.id)}
@@ -146,7 +156,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
       <div className="mb-4">
         <div className="text-sm font-medium text-gray-700 mb-2">Event Perks</div>
         <div className="flex flex-wrap gap-2">
-          {options.filter(option => ['food', 'residence'].includes(option.id)).map(filter => (
+          {perksFilters.map(filter => (
             <button 
               key={filter.id}
               onClick={() => onToggle(filter.id)}

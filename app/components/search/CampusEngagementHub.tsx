@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import SearchInput from './SearchInput';
 import SuggestionsList from './SuggestionsList';
 import FilterPanel from './FilterPanel';
@@ -26,12 +26,16 @@ const EXAMPLE_QUERIES = [
   "Career workshops for engineering majors"
 ];
 
-const FILTER_OPTIONS: FilterOption[] = [
-  { id: 'food', label: 'Free Food', icon: 'Coffee' },
+// Define all possible filter options
+const ALL_FILTER_OPTIONS: FilterOption[] = [
+  { id: 'today', label: 'Today', icon: 'Clock' },
+  { id: 'tomorrow', label: 'Tomorrow', icon: 'Calendar' },
+  { id: 'this-week', label: 'This Week', icon: 'Calendar' },
+  { id: 'weekend', label: 'Weekend', icon: 'Calendar' },
   { id: 'academic', label: 'Academic', icon: 'BookOpen' },
   { id: 'social', label: 'Social', icon: 'Users' },
   { id: 'career', label: 'Career', icon: 'Briefcase' },
-  { id: 'today', label: 'Today', icon: 'Clock' },
+  { id: 'food', label: 'Free Food', icon: 'Coffee' },
   { id: 'residence', label: 'Residence Life', icon: 'Home' },
 ];
 
@@ -60,9 +64,18 @@ const CampusEngagementHub: React.FC = () => {
     togglePersona
   } = usePersona();
   
+  // Filter options based on persona
+  const FILTER_OPTIONS = useMemo(() => {
+    if (personaType === 'resident') {
+      return ALL_FILTER_OPTIONS; // Show all filters for residents
+    } else {
+      // For commuters, exclude residence life filter
+      return ALL_FILTER_OPTIONS.filter(option => option.id !== 'residence');
+    }
+  }, [personaType]);
+  
   // State for filters
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const [filterCounts, setFilterCounts] = useState<FilterCount[]>([]);
 
   // Toggle filter selection
   const toggleFilter = useCallback((filterId: string | null) => {
@@ -92,7 +105,8 @@ const CampusEngagementHub: React.FC = () => {
     totalPages,
     hasMore,
     errorMessage,
-    setErrorMessage
+    setErrorMessage,
+    filterCounts
   } = useEvents(debouncedQuery, activeFilters, personaType, tagFilter, orgFilter, EVENTS_PER_PAGE);
   
   const {
@@ -100,33 +114,13 @@ const CampusEngagementHub: React.FC = () => {
     toggleFavorite
   } = useFavorites();
   
-  // Update filter counts when events change
-  useEffect(() => {
-    if (events.length) {
-      const counts: FilterCount[] = [];
-      
-      // Count food events
-      counts.push({ id: 'food', count: events.filter(event => event.hasFood).length });
-      
-      // Count events by category
-      counts.push({ id: 'academic', count: events.filter(event => event.category === 'academic').length });
-      counts.push({ id: 'social', count: events.filter(event => event.category === 'social').length });
-      counts.push({ id: 'career', count: events.filter(event => event.category === 'career').length });
-      
-      // Count residence events
-      counts.push({ id: 'residence', count: events.filter(event => isResidenceLifeEvent(event)).length });
-      
-      // Count today's events
-      const today = new Date();
-      const formattedToday = today.toLocaleDateString('en-US', {
-        month: 'long',
-        day: 'numeric'
-      });
-      counts.push({ id: 'today', count: events.filter(event => event.date.includes(formattedToday)).length });
-      
-      setFilterCounts(counts);
-    }
-  }, [events]);
+  // Convert filterCounts object to FilterCount array for FilterPanel
+  const filterCountsArray = useMemo(() => {
+    return FILTER_OPTIONS.map(option => ({
+      id: option.id,
+      count: filterCounts[option.id] || 0
+    }));
+  }, [FILTER_OPTIONS, filterCounts]);
   
   // Handle tag click for filtering
   const handleTagClick = (tag: string) => {
@@ -294,7 +288,7 @@ const CampusEngagementHub: React.FC = () => {
           options={FILTER_OPTIONS}
           activeFilters={activeFilters}
           onToggle={toggleFilter}
-          counts={filterCounts}
+          counts={filterCountsArray}
         />
 
         {/* Tag Filter Display */}

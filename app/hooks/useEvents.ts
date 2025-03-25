@@ -368,9 +368,7 @@ export const useEvents = (
             if (activeFilters.includes('food') && event.hasFood) return true;
             
             // Check for 'residence' filter
-            if (activeFilters.includes('residence') && isResidenceLifeEvent(event)) {
-              return true;
-            }
+            if (activeFilters.includes('residence') && isResidenceLifeEvent(event)) return true;
             
             return false;
           });
