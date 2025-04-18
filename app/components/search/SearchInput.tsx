@@ -12,6 +12,7 @@ interface SearchInputProps {
   onClear: () => void;
   onVoiceSearch: () => void;
   personaType: string;
+  className?: string; // Added className prop
 }
 
 const SearchInput: React.FC<SearchInputProps> = ({
@@ -22,7 +23,8 @@ const SearchInput: React.FC<SearchInputProps> = ({
   isRecording,
   onClear,
   onVoiceSearch,
-  personaType
+  personaType,
+  className = '', // Default to empty string
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -36,12 +38,12 @@ const SearchInput: React.FC<SearchInputProps> = ({
     <div 
       className={`relative flex items-center rounded-full border ${
         isFocused ? 'border-blue-500 shadow-lg' : 'border-gray-300'
-      } bg-white overflow-hidden mx-auto transition-shadow duration-200`}
+      } bg-white overflow-hidden mx-auto transition-shadow duration-200 ${className}`}
       onClick={focusInput}
     >
       <div className="pl-5 pr-2">
         <Search 
-          className={`h-5 w-5 ${isFocused ? 'text-blue-500' : 'text-gray-400'}`} 
+          className={`h-5 w-5 ${isFocused ? 'text-blue-500' : 'text-gray-400'} search-icon`} 
         />
       </div>
       

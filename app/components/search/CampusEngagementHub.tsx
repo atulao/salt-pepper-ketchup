@@ -6,6 +6,7 @@ import SuggestionsList from './SuggestionsList';
 import FilterPanel from './FilterPanel';
 import ResultsList from './ResultsList';
 import PersonaToggle from './PersonaToggle';
+import ThemeToggle from '../ThemeToggle';
 import { useSearch } from '../../hooks/useSearch';
 import { useSuggestions } from '../../hooks/useSuggestions';
 import { useEvents } from '../../hooks/useEvents';
@@ -40,9 +41,17 @@ const ALL_FILTER_OPTIONS: FilterOption[] = [
 ];
 
 const CampusEngagementHub: React.FC = () => {
+  const searchContainerRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState<boolean>(false);
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [orgFilter, setOrgFilter] = useState<string | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  
+  // Handle dark mode change
+  const handleModeChange = useCallback((mode: boolean) => {
+    setIsDarkMode(mode);
+    // You can add additional logic here if needed when mode changes
+  }, []);
   
   // Use custom hooks to manage various states and functionalities
   const { 
@@ -114,6 +123,88 @@ const CampusEngagementHub: React.FC = () => {
     toggleFavorite
   } = useFavorites();
   
+  useEffect(() => {
+    // Add styles for Dark Mode directly to the document when it's enabled
+    if (isDarkMode) {
+      // Create a style element if it doesn't exist
+      let styleEl = document.getElementById('dark-mode-styles');
+      
+      if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'dark-mode-styles';
+        document.head.appendChild(styleEl);
+      }
+      
+      // Set the CSS content
+      styleEl.textContent = `
+        .dark-mode {
+          --dark-bg: #121212;
+          --dark-card-bg: #1e1e1e;
+          --dark-border: #333333;
+          --dark-text: #e0e0e0;
+          --dark-text-secondary: #a0a0a0;
+          --dark-blue: #3b82f6;
+          --dark-purple: #8b5cf6;
+          --dark-green: #10b981;
+          
+          background-color: var(--dark-bg);
+          color: var(--dark-text);
+        }
+        
+        .dark-mode .bg-white {
+          background-color: var(--dark-card-bg);
+          border-color: var(--dark-border);
+        }
+        
+        .dark-mode .bg-gray-50 {
+          background-color: var(--dark-bg);
+        }
+        
+        .dark-mode .bg-gray-100,
+        .dark-mode .hover\\:bg-gray-100:hover,
+        .dark-mode .bg-gray-200 {
+          background-color: #333;
+          color: var(--dark-text);
+        }
+        
+        .dark-mode .hover\\:bg-gray-200:hover {
+          background-color: #444;
+        }
+        
+        .dark-mode .text-gray-600,
+        .dark-mode .text-gray-700,
+        .dark-mode .text-gray-800 {
+          color: var(--dark-text);
+        }
+        
+        .dark-mode .text-gray-500 {
+          color: var(--dark-text-secondary);
+        }
+        
+        .dark-mode .border {
+          border-color: var(--dark-border);
+        }
+        
+        .dark-mode .shadow-sm,
+        .dark-mode .shadow-md {
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+      `;
+      
+      // Add the dark-mode class to body
+      document.body.classList.add('dark-mode');
+    } else {
+      // Remove the dark-mode class from body
+      document.body.classList.remove('dark-mode');
+      
+      // Remove the style element if it exists
+      const styleEl = document.getElementById('dark-mode-styles');
+      if (styleEl) {
+        styleEl.remove();
+      }
+    }
+  }, [isDarkMode]);
+
   // Convert filterCounts object to FilterCount array for FilterPanel
   const filterCountsArray = useMemo(() => {
     return FILTER_OPTIONS.map(option => ({
@@ -168,7 +259,6 @@ const CampusEngagementHub: React.FC = () => {
   
   // Ref for infinite scroll
   const scrollSentinelRef = useRef<HTMLDivElement>(null);
-  const searchContainerRef = useRef<HTMLDivElement>(null);
   
   // Setup click outside handler
   useEffect(() => {
@@ -243,8 +333,12 @@ const CampusEngagementHub: React.FC = () => {
   );
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-50">
-      <div className="mt-16 md:mt-24 mb-6 text-center px-4">
+    <div className="flex flex-col items-center min-h-screen bg-gray-50 transition-colors duration-300">
+      <div className="w-full max-w-3xl px-4 flex justify-end mt-4">
+        <ThemeToggle onModeChange={handleModeChange} />
+      </div>
+      
+      <div className="mt-10 md:mt-16 mb-6 text-center px-4">
         <h1 className="text-4xl md:text-5xl font-bold text-blue-600 mb-3">Salt-Pepper-Ketchup</h1>
         <p className="text-lg md:text-xl text-gray-600">Your campus guide for events, resources, and connections</p>
       </div>
@@ -266,6 +360,7 @@ const CampusEngagementHub: React.FC = () => {
           onClear={clearSearch}
           onVoiceSearch={handleVoiceSearch}
           personaType={personaType}
+          className=""
         />
 
         {/* Example Queries */}
@@ -275,7 +370,7 @@ const CampusEngagementHub: React.FC = () => {
               <button
                 key={index}
                 onClick={() => setQuery(example)}
-                className="bg-white border border-gray-200 rounded-full px-3 py-1 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                className="bg-white border border-gray-200 rounded-full px-3 py-1 text-sm text-gray-700 hover:bg-gray-100"
               >
                 {example}
               </button>
@@ -289,6 +384,7 @@ const CampusEngagementHub: React.FC = () => {
           activeFilters={activeFilters}
           onToggle={toggleFilter}
           counts={filterCountsArray}
+          className=""
         />
 
         {/* Tag Filter Display */}

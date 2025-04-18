@@ -19,13 +19,15 @@ interface FilterPanelProps {
   activeFilters: string[];
   onToggle: (filterId: string | null) => void;  // Updated to accept null
   counts: FilterCount[];
+  className?: string; // Added className prop
 }
 
 const FilterPanel: React.FC<FilterPanelProps> = ({
   options,
   activeFilters,
   onToggle,
-  counts
+  counts,
+  className = '' // Default to empty string
 }) => {
   // Function to render the appropriate icon based on the icon string
   const renderIcon = (iconName: string) => {
@@ -76,7 +78,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   );
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+    <div className={`bg-white rounded-xl shadow-sm p-4 border border-gray-200 ${className}`}>
       <div className="flex justify-between items-center mb-3">
         <h3 className="font-medium text-gray-800">Filter Events</h3>
         
