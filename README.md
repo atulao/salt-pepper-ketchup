@@ -114,12 +114,26 @@ npm install
 NEXT_PUBLIC_API_URL=http://localhost:3000/api
 ```
 
-4. **Run the development server:**
+4. **Set up API keys:**
+Create a `.env.local` file in the root directory with the following content:
+```
+# API Keys - Get your own keys from Google Maps and MapBox
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+NEXT_PUBLIC_MAPBOX_API_KEY=your_mapbox_api_key_here
+```
+
+Important notes about API keys:
+- Never commit API keys to the repository
+- For Google Maps, get a key from the [Google Cloud Console](https://console.cloud.google.com/)
+- For MapBox, get a key from the [MapBox Developer Dashboard](https://account.mapbox.com/)
+- The application will not function correctly without valid API keys
+
+5. **Run the development server:**
 ```bash
 npm run dev
 ```
 
-5. **Open your browser:** Navigate to [http://localhost:3000](http://localhost:3000)
+6. **Open your browser:** Navigate to [http://localhost:3000](http://localhost:3000)
 
 ## Usage Examples
 
@@ -170,6 +184,17 @@ const MyComponent = () => {
   );
 };
 ```
+
+## Security & Best Practices
+
+1. **API Keys**: All API keys are stored in environment variables, never in the code.
+   - Use the `.env.local` file for local development
+   - Set environment variables in your hosting platform for production
+   - NEVER commit API keys to the repository
+
+2. **Error Handling**: The application includes robust error handling for API calls and user inputs.
+
+3. **Accessibility**: Components are designed with accessibility in mind, including keyboard navigation and screen reader support.
 
 ## Future Development
 
