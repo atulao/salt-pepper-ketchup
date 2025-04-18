@@ -14,6 +14,7 @@ Salt-Pepper-Ketchup transforms the typical campus event portal into a dynamic, A
 - **Voice Search Capability:** Students can use voice commands to find events and resources.
 - **Commuter/Resident Modes:** Toggle between different modes to optimize recommendations based on your campus lifestyle.
 - **Campus Building Directory:** Interactive map and building information to help students navigate the campus.
+- **Dark Mode Support:** Fully responsive dark mode with seamless transitions and persistent user preference.
 
 ## Technical Stack
 
@@ -22,6 +23,7 @@ Salt-Pepper-Ketchup transforms the typical campus event portal into a dynamic, A
 - **UI Components:** Lucide React for icons and visual elements
 - **Maps Integration:** MapBox for static maps of campus buildings
 - **API:** RESTful endpoints for search, suggestions, and user preferences
+- **Theming:** CSS variables and custom React hooks for theme management
 
 ## Project Architecture
 
@@ -57,6 +59,9 @@ app/
 ├── hooks/                     # Custom React hooks
 ├── types/                     # TypeScript type definitions
 └── utils/                     # Utility functions
+    ├── data-fetcher.ts        # Data fetching utilities
+    ├── formatters.ts          # Text and date formatting utilities 
+    └── theme-utils.ts         # Dark mode detection and theme management utilities
 ```
 
 ## Key Components
@@ -81,6 +86,14 @@ app/
 - **BuildingsDirectory:** Comprehensive directory of campus buildings with search and filtering
 - **CampusMap:** Interactive map of the campus with building markers
 - **FullCampusMap:** Full-screen campus map for detailed navigation
+
+### Theme Management
+
+- **ThemeToggle:** Component for toggling between light and dark mode
+- **theme-utils.ts:** Utility functions for theme management:
+  - `useDarkMode()`: Custom React hook that detects dark mode changes using MutationObserver
+  - `getThemeClasses()`: Helper function to apply the appropriate classes based on theme
+  - `applyTheme()`: Function to directly manipulate theme classes on document elements
 
 ## Getting Started
 
@@ -115,6 +128,48 @@ npm run dev
 - **Events for commuters:** Toggle to Commuter mode to see events optimized for commuter students
 - **Campus navigation:** Explore the interactive campus map and building directory
 - **Voice search:** Click the microphone icon and speak your query
+- **Toggle dark mode:** Use the theme toggle in the top navigation to switch between light and dark mode
+
+## Theme System
+
+The application uses a comprehensive theming system to support both light and dark modes:
+
+### CSS Variables
+
+Theme colors are defined as CSS variables in `globals.css`, with separate sets for light and dark modes.
+These variables control colors for backgrounds, text, buttons, cards, and other UI elements.
+
+### Dark Mode Detection
+
+Dark mode is managed through:
+1. A client-side script in `layout.tsx` that detects saved preferences on initial load
+2. The `ThemeToggle` component that allows users to switch between modes
+3. The `useDarkMode` hook that provides real-time theme state to components
+
+### Using Theme Utilities
+
+Components can easily implement theme-aware styling:
+
+```tsx
+// Import the theme utilities
+import { useDarkMode, getThemeClasses } from '../../utils/theme-utils';
+
+// Inside your component
+const MyComponent = () => {
+  // Get the current theme state
+  const isDarkMode = useDarkMode();
+  
+  return (
+    <div className={getThemeClasses(
+      isDarkMode,
+      'bg-white text-gray-900', // Light mode classes
+      'bg-gray-800 text-white'   // Dark mode classes
+    )}>
+      Component content
+    </div>
+  );
+};
+```
 
 ## Future Development
 
@@ -142,6 +197,11 @@ npm run dev
   - React Native implementation
   - Location-based awareness
   - Offline capability
+
+- [ ] **Theme Enhancements**
+  - Additional theme options (high contrast, system-matched)
+  - Per-component theme preferences
+  - Automatic time-based theme switching
 
 ## Contributing
 
