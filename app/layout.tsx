@@ -18,14 +18,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <Script id="ui-mode-script" strategy="beforeInteractive">
+        <Script id="ui-mode-script" strategy="afterInteractive">
           {`
             (function() {
               try {
                 const savedMode = localStorage.getItem('uiMode');
                 if (savedMode === 'dark') {
+                  document.documentElement.classList.add('dark');
                   document.body.classList.add('dark-mode');
                 } else {
+                  document.documentElement.classList.remove('dark');
                   document.body.classList.remove('dark-mode');
                 }
               } catch (e) {
@@ -35,7 +37,7 @@ export default function RootLayout({
           `}
         </Script>
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} transition-colors duration-300`}>
         {children}
       </body>
     </html>

@@ -9,6 +9,7 @@ import { isResidenceLifeEvent } from '../../utils/data-fetcher';
 import { getDirectionsUrl } from '../map/campus-building-data';
 import EventDescription from './EventDescription';
 import { formatTime } from '../../utils/formatters';
+import { useDarkMode, getThemeClasses } from '../../utils/theme-utils';
 
 // Month mapping for calendar functionality
 const MONTH_MAP: Record<string, number> = {
@@ -23,11 +24,11 @@ interface CategoryIcon {
 
 // Constants for icons
 const CATEGORY_ICONS: CategoryIcon = {
-  academic: <BookOpen className="h-4 w-4 mr-1 text-blue-500" />,
-  social: <Users className="h-4 w-4 mr-1 text-purple-500" />,
-  career: <Briefcase className="h-4 w-4 mr-1 text-amber-500" />,
-  food: <Coffee className="h-4 w-4 mr-1 text-emerald-500" />,
-  other: <Calendar className="h-4 w-4 mr-1 text-gray-500" />
+  academic: <BookOpen className="h-4 w-4 mr-1 text-blue-500 dark:text-blue-300" />,
+  social: <Users className="h-4 w-4 mr-1 text-purple-500 dark:text-purple-300" />,
+  career: <Briefcase className="h-4 w-4 mr-1 text-amber-500 dark:text-amber-300" />,
+  food: <Coffee className="h-4 w-4 mr-1 text-emerald-500 dark:text-emerald-300" />,
+  other: <Calendar className="h-4 w-4 mr-1 text-gray-500 dark:text-gray-300" />
 };
 
 // Tag color mapping
@@ -82,6 +83,9 @@ const EventCard: React.FC<EventCardProps> = ({
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
   const [isMapVisible, setIsMapVisible] = useState(false);
   const [rsvpStatus, setRsvpStatus] = useState<string | null>(null);
+  
+  // Use the custom dark mode hook
+  const isDarkMode = useDarkMode();
 
   // Parse multiple organizations if applicable
   const organizations = event.organizerName.split(/,\s*|\s+and\s+|\s*&\s*/).filter(Boolean);
@@ -248,16 +252,32 @@ const EventCard: React.FC<EventCardProps> = ({
   const month = dateParts[0].substring(0, 3);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-200 border border-gray-200 transform hover:-translate-y-1">
+    <div className={`${getThemeClasses(
+      isDarkMode,
+      'bg-white border-gray-200 text-gray-900',
+      'bg-gray-800 border-gray-700 shadow-gray-900/30 text-white'
+    )} rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-200 border transform hover:-translate-y-1`}>
       <div className="p-4">
         <div className="flex">
-          {/* Date Badge - Using original style */}
+          {/* Date Badge */}
           <div className="mr-4">
-            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-2 text-center w-16">
-              <div className="text-blue-600 font-bold text-2xl">
+            <div className={`${getThemeClasses(
+              isDarkMode,
+              'bg-white border-gray-200',
+              'bg-gray-800 border-gray-700 text-white'
+            )} border rounded-lg shadow-sm p-2 text-center w-16`}>
+              <div className={`${getThemeClasses(
+                isDarkMode,
+                'text-blue-600',
+                'text-blue-400'
+              )} font-bold text-2xl`}>
                 {day}
               </div>
-              <div className="text-gray-600 text-sm font-medium">
+              <div className={`${getThemeClasses(
+                isDarkMode,
+                'text-gray-600',
+                'text-gray-300'
+              )} text-sm font-medium`}>
                 {month}
               </div>
             </div>
@@ -265,79 +285,112 @@ const EventCard: React.FC<EventCardProps> = ({
           
           <div className="flex-1">
             {/* Event Title */}
-            <h3 className="font-semibold text-lg text-gray-900 mb-1">{event.title}</h3>
+            <h3 className={`font-semibold text-lg ${getThemeClasses(
+              isDarkMode,
+              'text-gray-900',
+              'text-white'
+            )} mb-1`}>{event.title}</h3>
             
-            {/* Organization Name(s) - MODIFIED for multiple orgs & clickable */}
-            <div className="flex items-center text-sm text-gray-700 mb-2">
+            {/* Organization Name(s) */}
+            <div className={`flex items-center text-sm ${getThemeClasses(
+              isDarkMode,
+              'text-gray-700',
+              'text-gray-300'
+            )} mb-2`}>
               {hasMultipleOrgs ? (
-                <Users2 className="h-4 w-4 mr-1 text-gray-500" />
+                <Users2 className={`h-4 w-4 mr-1 ${getThemeClasses(
+                  isDarkMode,
+                  'text-gray-500',
+                  'text-gray-400'
+                )}`} />
               ) : (
-                <User className="h-4 w-4 mr-1 text-gray-500" />
+                <User className={`h-4 w-4 mr-1 ${getThemeClasses(
+                  isDarkMode,
+                  'text-gray-500',
+                  'text-gray-400'
+                )}`} />
               )}
               <div className="flex flex-wrap items-center">
                 {organizations.map((org, index) => (
                   <React.Fragment key={index}>
                     <button 
-                      className="font-medium text-gray-700 hover:text-blue-600 tag-clickable"
+                      className={`font-medium ${getThemeClasses(
+                        isDarkMode,
+                        'text-gray-700 hover:text-blue-600',
+                        'text-gray-300 hover:text-blue-400'
+                      )} tag-clickable`}
                       onClick={(e) => handleOrgClick(org, e)}
                     >
                       {org}
                     </button>
                     {index < organizations.length - 1 && (
-                      <span className="mx-1 text-gray-400">•</span>
+                      <span className={`mx-1 ${getThemeClasses(
+                        isDarkMode,
+                        'text-gray-400',
+                        'text-gray-500'
+                      )}`}>•</span>
                     )}
                   </React.Fragment>
                 ))}
               </div>
             </div>
             
-            {/* Time and Location - Using original style with better visibility */}
-            <div className="flex items-center text-sm text-gray-600 mb-2">
-              <Calendar className="h-4 w-4 mr-1 text-blue-500" />
+            {/* Time and Location */}
+            <div className={`flex items-center text-sm ${getThemeClasses(
+              isDarkMode,
+              'text-gray-600',
+              'text-gray-300'
+            )} mb-2`}>
+              <Calendar className={`h-4 w-4 mr-1 ${getThemeClasses(
+                isDarkMode,
+                'text-blue-500',
+                'text-blue-400'
+              )}`} />
               <span className="font-medium">{formattedTime}</span>
-              <span className="mx-2">•</span>
-              <MapPin className="h-4 w-4 mr-1 text-red-500" />
+              <span className={`mx-2 ${getThemeClasses(
+                isDarkMode,
+                'text-gray-400',
+                'text-gray-500'
+              )}`}>•</span>
+              <MapPin className={`h-4 w-4 mr-1 ${getThemeClasses(
+                isDarkMode,
+                'text-red-500',
+                'text-red-400'
+              )}`} />
               <span className="font-medium">{event.location}</span>
             </div>
             
-            {/* RSVP buttons */}
+            {/* RSVP buttons using event-btn classes */}
             <div className="flex space-x-2 mb-3">
+              {/* Going button */}
               <button 
-                className={`px-4 py-1.5 text-sm font-medium rounded-md ${
-                  rsvpStatus === 'going' 
-                    ? 'bg-green-100 text-green-700 border border-green-200' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-green-50 border border-gray-200'
-                }`}
+                className={`event-btn ${rsvpStatus === 'going' ? 'event-btn-green' : 'event-btn-default'}`}
                 onClick={() => handleRSVP('going')}
               >
                 Going
               </button>
+              
+              {/* Maybe button */}
               <button 
-                className={`px-4 py-1.5 text-sm font-medium rounded-md ${
-                  rsvpStatus === 'maybe' 
-                    ? 'bg-amber-100 text-amber-700 border border-amber-200' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-amber-50 border border-gray-200'
-                }`}
+                className={`event-btn ${rsvpStatus === 'maybe' ? 'event-btn-amber' : 'event-btn-default'}`}
                 onClick={() => handleRSVP('maybe')}
               >
                 Maybe
               </button>
+              
+              {/* Can't Go button */}
               <button 
-                className={`px-4 py-1.5 text-sm font-medium rounded-md ${
-                  rsvpStatus === 'not-going' 
-                    ? 'bg-red-100 text-red-700 border border-red-200' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-red-50 border border-gray-200'
-                }`}
+                className={`event-btn ${rsvpStatus === 'not-going' ? 'event-btn-red' : 'event-btn-default'}`}
                 onClick={() => handleRSVP('not-going')}
               >
                 Can't Go
               </button>
             </div>
             
-            {/* Category badges - MODIFIED to be clickable */}
+            {/* Category badges using event-tag classes */}
             <div className="mb-3 flex flex-wrap gap-1">
               <button 
-                className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 cursor-pointer hover:bg-blue-200"
+                className="event-tag event-tag-blue"
                 onClick={(e) => handleTagClick(event.category, e)}
               >
                 {CATEGORY_ICONS[event.category] || CATEGORY_ICONS.other}
@@ -346,7 +399,7 @@ const EventCard: React.FC<EventCardProps> = ({
               
               {isResidenceLifeEvent(event) && (
                 <button 
-                  className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800 cursor-pointer hover:bg-purple-200"
+                  className="event-tag event-tag-purple"
                   onClick={(e) => handleTagClick('residence', e)}
                 >
                   <Home className="h-3 w-3 mr-1" />
@@ -356,7 +409,7 @@ const EventCard: React.FC<EventCardProps> = ({
               
               {event.hasFood && (
                 <button 
-                  className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 cursor-pointer hover:bg-green-200"
+                  className="event-tag event-tag-green"
                   onClick={(e) => handleTagClick('free food', e)}
                 >
                   <Coffee className="h-3 w-3 mr-1" />
@@ -387,37 +440,62 @@ const EventCard: React.FC<EventCardProps> = ({
         </div>
         
         {/* Action buttons */}
-        <div className="mt-3 flex justify-between items-center pt-3 border-t">
+        <div className={`mt-3 flex justify-between items-center pt-3 border-t ${getThemeClasses(
+          isDarkMode,
+          'border-gray-100',
+          'border-gray-700'
+        )}`}>
           <div className="flex space-x-2">
+            {/* Favorite button */}
             <button 
               onClick={() => onToggleFavorite(event.id)}
-              className={`p-2 rounded-full ${
-                isFavorite 
-                  ? 'text-red-500 bg-red-50' 
-                  : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
-              }`}
+              className={isFavorite 
+                ? `p-2 rounded-full ${getThemeClasses(
+                    isDarkMode,
+                    'text-red-500 bg-red-50',
+                    'text-red-400 bg-red-900/30'
+                  )}` 
+                : `p-2 rounded-full ${getThemeClasses(
+                    isDarkMode,
+                    'text-gray-400 hover:text-red-500 hover:bg-gray-100',
+                    'text-gray-400 hover:text-red-400 hover:bg-gray-700'
+                  )}`
+              }
               aria-label="Favorite"
             >
               <Heart className="h-5 w-5" fill={isFavorite ? 'currentColor' : 'none'} />
             </button>
             
+            {/* Map button */}
             <button
               onClick={() => setIsMapVisible(!isMapVisible)}
-              className={`p-2 rounded-full ${
-                isMapVisible 
-                  ? 'text-blue-500 bg-blue-50' 
-                  : 'text-gray-400 hover:text-blue-500 hover:bg-gray-100'
-              }`}
+              className={isMapVisible
+                ? `p-2 rounded-full ${getThemeClasses(
+                    isDarkMode,
+                    'text-blue-500 bg-blue-50',
+                    'text-blue-400 bg-blue-900/30'
+                  )}`
+                : `p-2 rounded-full ${getThemeClasses(
+                    isDarkMode,
+                    'text-gray-400 hover:text-blue-500 hover:bg-gray-100',
+                    'text-gray-400 hover:text-blue-400 hover:bg-gray-700'
+                  )}`
+              }
               aria-label="Toggle map"
             >
               <Eye className="h-5 w-5" />
             </button>
             
+            {/* Directions button */}
             <a 
               href={getDirectionsUrl(event.location)}
               target="_blank" 
               rel="noopener noreferrer"
-              className="p-2 text-gray-400 hover:text-green-500 hover:bg-gray-100 rounded-full"
+              className={`p-2 rounded-full ${getThemeClasses(
+                isDarkMode,
+                'text-gray-400 hover:text-green-500 hover:bg-gray-100',
+                'text-gray-400 hover:text-green-400 hover:bg-gray-700'
+              )}`}
               aria-label="Get directions"
             >
               <MapPin className="h-5 w-5" />
@@ -425,25 +503,40 @@ const EventCard: React.FC<EventCardProps> = ({
           </div>
           
           <div className="flex space-x-2">
+            {/* Calendar button */}
             <button 
               onClick={addToCalendar}
-              className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
+              className={`p-2 rounded-full ${getThemeClasses(
+                isDarkMode,
+                'text-gray-400 hover:text-blue-500 hover:bg-gray-100',
+                'text-gray-400 hover:text-blue-400 hover:bg-gray-700'
+              )}`}
               aria-label="Add to Calendar"
             >
               <CalendarIcon className="h-5 w-5" />
             </button>
             
+            {/* Share button */}
             <button 
               onClick={shareEvent}
-              className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
+              className={`p-2 rounded-full ${getThemeClasses(
+                isDarkMode,
+                'text-gray-400 hover:text-blue-500 hover:bg-gray-100',
+                'text-gray-400 hover:text-blue-400 hover:bg-gray-700'
+              )}`}
               aria-label="Share"
             >
               <Share2 className="h-5 w-5" />
             </button>
             
+            {/* View details button */}
             <button 
               onClick={() => window.open(`/event/${event.id}`, '_blank')}
-              className="p-2 text-gray-400 hover:text-blue-500 hover:bg-gray-100 rounded-full"
+              className={`p-2 rounded-full ${getThemeClasses(
+                isDarkMode,
+                'text-gray-400 hover:text-blue-500 hover:bg-gray-100',
+                'text-gray-400 hover:text-blue-400 hover:bg-gray-700'
+              )}`}
               aria-label="View details"
             >
               <LinkIcon className="h-5 w-5" />

@@ -12,17 +12,16 @@ Salt-Pepper-Ketchup transforms the typical campus event portal into a dynamic, A
 - **Personalized Recommendations:** The platform tailors event and resource suggestions based on the student's interests, major, and campus habits.
 - **Smart Filtering:** Dynamic category filters for free food, academic events, social gatherings, and career opportunities.
 - **Voice Search Capability:** Students can use voice commands to find events and resources.
-- **Commuter/Resident Modes:** Toggle between different modes to optimize recommendations based on your campus lifestyle:
-  - **Commuter Mode:** Prioritizes daytime events, events with food, and events specifically for commuters
-  - **Resident Mode:** Provides a focused view of residence hall events and activities
+- **Commuter/Resident Modes:** Toggle between different modes to optimize recommendations based on your campus lifestyle.
+- **Campus Building Directory:** Interactive map and building information to help students navigate the campus.
 
 ## Technical Stack
 
-- **Frontend:** Next.js 15+ with TypeScript and Tailwind CSS 4
+- **Frontend:** Next.js 15+ with React 19 and TypeScript
+- **Styling:** Tailwind CSS 4 with dark mode support
 - **UI Components:** Lucide React for icons and visual elements
+- **Maps Integration:** MapBox for static maps of campus buildings
 - **API:** RESTful endpoints for search, suggestions, and user preferences
-- **Natural Language Processing:** Custom NLP utilities for query intent detection
-- **Live Data Integration:** Integration with NJIT Campus Labs API for real event data
 
 ## Project Architecture
 
@@ -30,50 +29,58 @@ The project follows a modular component architecture:
 
 ```
 app/
-├── api/                       # API routes for server-side functionality 
-│   ├── building-location/     # Building location geocoding API
-│   ├── proxy/                 # Proxy for NJIT Campus Labs API
-│   ├── search-events/         # Search functionality API
-│   └── suggest/               # Suggestions API
+├── api/                       # API routes for server-side functionality
 ├── components/                # UI Components
 │   ├── client-wrappers/       # Client-side component wrappers
 │   ├── events/                # Event-related components
-│   │   ├── EventCard.tsx       # Individual event display card
+│   │   ├── EventCard.tsx      # Individual event display card
+│   │   ├── EventDetailPage.tsx # Full event details page
 │   │   ├── EventDescription.tsx # Expandable event description
-│   │   └── EventActions.tsx    # Event action buttons (favorite, share, etc.)
+│   │   └── EventActions.tsx   # Event action buttons (favorite, share, etc.)
 │   ├── map/                   # Map-related components
-│   │   ├── CampusMap.tsx       # Campus map component
-│   │   └── CampusMapPreview.tsx # Small map preview for events
+│   │   ├── BuildingCard.tsx   # Building information card with map
+│   │   ├── BuildingsDirectory.tsx # List of campus buildings
+│   │   ├── CampusMap.tsx      # Campus map component
+│   │   ├── FullCampusMap.tsx  # Full-screen campus map
+│   │   └── campus-building-data.ts # Building coordinates and aliases
 │   └── search/                # Search-related components
 │       ├── CampusEngagementHub.tsx # Main container component
-│       ├── SearchInput.tsx     # Search input field with voice capability
+│       ├── SearchInput.tsx    # Search input field with voice capability
 │       ├── SuggestionsList.tsx # Search suggestions display
-│       ├── FilterPanel.tsx     # Category and feature filters
-│       ├── PersonaToggle.tsx   # Commuter/Resident mode toggle
-│       └── ResultsList.tsx     # Event results display
+│       ├── FilterPanel.tsx    # Category and feature filters
+│       ├── PersonaToggle.tsx  # Commuter/Resident mode toggle
+│       └── ResultsList.tsx    # Event results display
+├── buildings/                 # Building-related pages
+├── config/                    # Configuration files (API keys, etc.)
+├── contexts/                  # React context providers
+├── event/                     # Event-related pages
 ├── hooks/                     # Custom React hooks
-│   ├── useSearch.ts           # Search functionality hook
-│   ├── useSuggestions.ts      # Suggestions management hook
-│   ├── useEvents.ts           # Events fetching and filtering hook 
-│   ├── usePersona.ts          # Persona state management hook
-│   └── useFavorites.ts        # User favorites management hook
 ├── types/                     # TypeScript type definitions
-│   ├── event.ts               # Event-related types
-│   ├── suggestion.ts          # Suggestion-related types
-│   └── filters.ts             # Filtering and categories types
 └── utils/                     # Utility functions
-    ├── data-fetcher.ts        # NJIT event data fetching utility
-    └── nlp.ts                 # Natural language processing utilities
 ```
 
-## Live Data Integration
+## Key Components
 
-The platform now integrates with real NJIT campus events data through the Campus Labs API:
+### Search Experience
 
-- **Real-Time Events:** Fetches actual events from the NJIT event calendar
-- **Intelligent Categorization:** Automatically categorizes events by type and detects food availability
-- **Fallback Mechanism:** Gracefully falls back to mock data if the API is unavailable
-- **Smart Filtering:** Sophisticated filtering system that works with both real and mock data
+- **CampusEngagementHub:** Main container component that orchestrates the entire search experience
+- **SearchInput:** Provides text and voice input capabilities with real-time suggestions
+- **FilterPanel:** Dynamic category filters with count indicators and toggle-style activation
+- **PersonaToggle:** Switch between Commuter and Resident modes
+- **ResultsList:** Displays search results with sorting options
+
+### Event Experience
+
+- **EventCard:** Rich display of event information with expandable descriptions
+- **EventDetailPage:** Comprehensive view of event details including location, time, and description
+- **EventActions:** Interactive action buttons for events (favorite, add to calendar, share, directions)
+
+### Campus Navigation
+
+- **BuildingCard:** Displays building information with a MapBox static map
+- **BuildingsDirectory:** Comprehensive directory of campus buildings with search and filtering
+- **CampusMap:** Interactive map of the campus with building markers
+- **FullCampusMap:** Full-screen campus map for detailed navigation
 
 ## Getting Started
 
@@ -106,42 +113,13 @@ npm run dev
 - **Find events with food:** Search for "free pizza" or click the "Free Food" filter
 - **Academic events:** Search for "tutoring" or "study groups" or use the Academic filter
 - **Events for commuters:** Toggle to Commuter mode to see events optimized for commuter students
-- **Residence hall events:** Toggle to Resident mode to focus on dorm and residence life events
-- **Voice search:** Click the microphone icon and speak your query (e.g., "Show me networking events with free food")
-- **Save favorites:** Click the heart icon on any event to save it to your favorites
-
-## Key Component Features
-
-### CampusEngagementHub
-- Main container component that orchestrates the entire search experience
-- Manages state across child components
-- Handles filtering and sorting logic
-
-### SearchInput
-- Provides text and voice input capabilities
-- Real-time suggestions as you type
-- Clear search functionality
-
-### FilterPanel
-- Dynamic category filters with count indicators
-- Toggle-style filter activation
-- Visual indicators for active filters
-
-### PersonaToggle
-- Switch between Commuter and Resident modes
-- Visually distinct UI elements for each mode
-- Persistent preference saved in localStorage
-
-### EventCard
-- Rich display of event information
-- Expandable descriptions
-- Interactive actions (favorite, add to calendar, share, directions)
-- Automatic food detection and labeling
+- **Campus navigation:** Explore the interactive campus map and building directory
+- **Voice search:** Click the microphone icon and speak your query
 
 ## Future Development
 
 - [ ] **User Authentication and Profiles**
-  - NJIT student login integration
+  - Campus student login integration
   - Preference saving
   - Event history
 

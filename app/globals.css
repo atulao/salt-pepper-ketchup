@@ -1,10 +1,12 @@
 @import "tailwindcss";
 
+/* Light Mode Theme Variables */
 :root {
   --background: #ffffff;
   --foreground: #171717;
   --card-background: #ffffff;
   --card-border: #e5e7eb;
+  --card-border-subtle: #f3f4f6;
   --primary: #3b82f6;
   --primary-foreground: #ffffff;
   --primary-light: #93c5fd;
@@ -22,13 +24,46 @@
   --input: #e5e7eb;
   --ring: #3b82f6;
   --radius: 0.5rem;
+  
+  /* Button Colors - Light Mode */
+  --btn-default-bg: #f9fafb;
+  --btn-default-text: #374151;
+  --btn-default-border: #e5e7eb;
+  --btn-default-hover: #f3f4f6;
+  
+  --btn-blue-bg: #dbeafe;
+  --btn-blue-text: #1e40af;
+  --btn-blue-border: #bfdbfe;
+  --btn-blue-hover: #bfdbfe;
+  
+  --btn-green-bg: #d1fae5;
+  --btn-green-text: #065f46;
+  --btn-green-border: #a7f3d0;
+  --btn-green-hover: #a7f3d0;
+  
+  --btn-red-bg: #fee2e2;
+  --btn-red-text: #b91c1c;
+  --btn-red-border: #fecaca;
+  --btn-red-hover: #fecaca;
+  
+  --btn-amber-bg: #fff7ed;
+  --btn-amber-text: #c2410c;
+  --btn-amber-border: #fed7aa;
+  --btn-amber-hover: #fed7aa;
+  
+  --btn-purple-bg: #f3e8ff;
+  --btn-purple-text: #6b21a8;
+  --btn-purple-border: #e9d5ff;
+  --btn-purple-hover: #e9d5ff;
 }
 
+/* Dark Mode Theme Variables */
 .dark {
   --background: #1f2937;
   --foreground: #f9fafb;
   --card-background: #111827;
   --card-border: #374151;
+  --card-border-subtle: #1f2937;
   --primary: #3b82f6;
   --primary-foreground: #f9fafb;
   --primary-light: #60a5fa;
@@ -45,6 +80,37 @@
   --border: #374151;
   --input: #374151;
   --ring: #3b82f6;
+  
+  /* Button Colors - Dark Mode */
+  --btn-default-bg: #374151;
+  --btn-default-text: #e5e7eb;
+  --btn-default-border: #4b5563;
+  --btn-default-hover: #4b5563;
+  
+  --btn-blue-bg: rgba(30, 58, 138, 0.5);
+  --btn-blue-text: #93c5fd;
+  --btn-blue-border: #1e40af;
+  --btn-blue-hover: rgba(30, 64, 175, 0.7);
+  
+  --btn-green-bg: rgba(6, 78, 59, 0.5);
+  --btn-green-text: #86efac;
+  --btn-green-border: #065f46;
+  --btn-green-hover: rgba(6, 95, 70, 0.7);
+  
+  --btn-red-bg: rgba(127, 29, 29, 0.5);
+  --btn-red-text: #fca5a5;
+  --btn-red-border: #991b1b;
+  --btn-red-hover: rgba(153, 27, 27, 0.7);
+  
+  --btn-amber-bg: rgba(120, 53, 15, 0.5);
+  --btn-amber-text: #fcd34d;
+  --btn-amber-border: #92400e;
+  --btn-amber-hover: rgba(146, 64, 14, 0.7);
+  
+  --btn-purple-bg: rgba(76, 29, 149, 0.5);
+  --btn-purple-text: #d8b4fe;
+  --btn-purple-border: #6b21a8;
+  --btn-purple-hover: rgba(91, 33, 182, 0.7);
 }
 
 @theme inline {
@@ -420,10 +486,41 @@ body {
   background-color: #374151;
 }
 
+/* Improve text contrast for dark mode */
 .dark .text-gray-600,
 .dark .text-gray-700,
-.dark .text-gray-800 {
-  color: #e5e7eb;
+.dark .text-gray-800,
+.dark .text-gray-900 {
+  color: #f3f4f6;
+}
+
+/* Make sure event titles have high contrast in dark mode */
+.dark h3.text-gray-900,
+.dark h3.font-semibold, 
+.dark .font-semibold.text-lg {
+  color: #ffffff !important;
+}
+
+/* Light mode specific styles to ensure good contrast */
+.bg-gray-50 {
+  background-color: #f9fafb;
+}
+
+.text-gray-700 {
+  color: #374151;
+}
+
+.text-gray-800 {
+  color: #1f2937;
+}
+
+.text-gray-900 {
+  color: #111827;
+}
+
+/* Light mode RSVP buttons */
+.bg-gray-50 {
+  background-color: #f9fafb;
 }
 
 .dark .text-blue-600 {
@@ -440,6 +537,15 @@ body {
 
 .dark .bg-blue-100 {
   background-color: rgba(59, 130, 246, 0.2);
+}
+
+/* Improve organization name contrast */
+.dark .text-gray-700.hover\:text-blue-600 {
+  color: #d1d5db;
+}
+
+.dark .font-medium.text-gray-700 {
+  color: #d1d5db;
 }
 
 .dark .border-blue-100,
@@ -478,6 +584,47 @@ body {
   color: #6ee7b7;
 }
 
+/* Improve contrast for tag badges in dark mode */
+.dark .bg-blue-100.text-blue-800 {
+  background-color: rgba(59, 130, 246, 0.3);
+  color: #bfdbfe;
+}
+
+.dark .bg-green-100.text-green-800 {
+  background-color: rgba(16, 185, 129, 0.3);
+  color: #a7f3d0;
+}
+
+.dark .bg-purple-100.text-purple-800 {
+  background-color: rgba(139, 92, 246, 0.3);
+  color: #ddd6fe;
+}
+
+/* Ensure light mode badges have good contrast */
+.bg-blue-100 {
+  background-color: #dbeafe;
+}
+
+.text-blue-800 {
+  color: #1e40af;
+}
+
+.bg-green-100 {
+  background-color: #d1fae5;
+}
+
+.text-green-800 {
+  color: #065f46;
+}
+
+.bg-purple-100 {
+  background-color: #ede9fe;
+}
+
+.text-purple-800 {
+  color: #5b21b6;
+}
+
 .dark .shadow-sm,
 .dark .shadow-md {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
@@ -494,4 +641,182 @@ body {
     color 0.3s ease,
     border-color 0.3s ease,
     box-shadow 0.3s ease;
+}
+
+/* Improve dark mode styling for food and tag buttons */
+.dark .bg-blue-900\/50 {
+  background-color: rgba(30, 58, 138, 0.5);
+}
+
+.dark .bg-green-900\/50 {
+  background-color: rgba(6, 78, 59, 0.5);
+}
+
+.dark .bg-purple-900\/50 {
+  background-color: rgba(76, 29, 149, 0.5);
+}
+
+.dark .bg-amber-900\/50 {
+  background-color: rgba(120, 53, 15, 0.5);
+}
+
+.dark .bg-red-900\/50 {
+  background-color: rgba(127, 29, 29, 0.5);
+}
+
+.dark .bg-blue-800\/70 {
+  background-color: rgba(30, 64, 175, 0.7);
+}
+
+.dark .bg-green-800\/70 {
+  background-color: rgba(6, 95, 70, 0.7);
+}
+
+.dark .bg-purple-800\/70 {
+  background-color: rgba(91, 33, 182, 0.7);
+}
+
+/* RSVP buttons in dark mode */
+.dark .bg-gray-700 {
+  background-color: #374151;
+}
+
+.dark .bg-gray-600 {
+  background-color: #4b5563;
+}
+
+.dark .border-gray-600 {
+  border-color: #4b5563;
+}
+
+/* Going button when active */
+.dark .bg-green-900\/50 {
+  background-color: rgba(6, 78, 59, 0.5);
+}
+
+.dark .text-green-300 {
+  color: #86efac;
+}
+
+.dark .border-green-800 {
+  border-color: #065f46;
+}
+
+/* Maybe button when active */
+.dark .bg-amber-900\/50 {
+  background-color: rgba(120, 53, 15, 0.5);
+}
+
+.dark .text-amber-300 {
+  color: #fcd34d;
+}
+
+.dark .border-amber-800 {
+  border-color: #92400e;
+}
+
+/* Can't Go button when active */
+.dark .bg-red-900\/50 {
+  background-color: rgba(127, 29, 29, 0.5);
+}
+
+.dark .text-red-300 {
+  color: #fca5a5;
+}
+
+.dark .border-red-800 {
+  border-color: #991b1b;
+}
+
+/* Button Styles */
+.event-btn {
+  @apply px-2 py-1 rounded-md text-xs font-medium shadow-sm transition-all;
+  border-width: 1px;
+  min-width: 4rem;
+  text-align: center;
+}
+
+.event-btn-default {
+  background-color: var(--btn-default-bg);
+  color: var(--btn-default-text);
+  border-color: var(--btn-default-border);
+}
+
+.event-btn-default:hover {
+  background-color: var(--btn-default-hover);
+}
+
+.event-btn-green {
+  background-color: var(--btn-green-bg);
+  color: var(--btn-green-text);
+  border-color: var(--btn-green-border);
+}
+
+.event-btn-green:hover {
+  background-color: var(--btn-green-hover);
+}
+
+.event-btn-amber {
+  background-color: var(--btn-amber-bg);
+  color: var(--btn-amber-text);
+  border-color: var(--btn-amber-border);
+}
+
+.event-btn-amber:hover {
+  background-color: var(--btn-amber-hover);
+}
+
+.event-btn-red {
+  background-color: var(--btn-red-bg);
+  color: var(--btn-red-text);
+  border-color: var(--btn-red-border);
+}
+
+.event-btn-red:hover {
+  background-color: var(--btn-red-hover);
+}
+
+/* Tag Styles */
+.event-tag {
+  @apply inline-flex items-center px-2 py-1 rounded-md text-xs font-medium transition-all;
+  border-width: 1px;
+  cursor: pointer;
+  /* Using variable tokens to support both light and dark modes */
+  background-color: var(--btn-default-bg);
+  color: var(--btn-default-text);
+  border-color: var(--btn-default-border);
+}
+
+.event-tag:hover {
+  background-color: var(--btn-default-hover);
+}
+
+.event-tag-blue {
+  background-color: var(--btn-blue-bg);
+  color: var(--btn-blue-text);
+  border-color: var(--btn-blue-border);
+}
+
+.event-tag-blue:hover {
+  background-color: var(--btn-blue-hover);
+}
+
+.event-tag-green {
+  background-color: var(--btn-green-bg);
+  color: var(--btn-green-text);
+  border-color: var(--btn-green-border);
+}
+
+.event-tag-green:hover {
+  background-color: var(--btn-green-hover);
+}
+
+.event-tag-purple {
+  background-color: var(--btn-purple-bg);
+  color: var(--btn-purple-text);
+  border-color: var(--btn-purple-border);
+}
+
+.event-tag-purple:hover {
+  background-color: var(--btn-purple-hover);
 }

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useDarkMode, getThemeClasses } from '../../utils/theme-utils';
 
 interface EventDescriptionProps {
   description: string;
@@ -43,6 +44,9 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
   const [internalExpanded, setInternalExpanded] = useState(isExpanded);
   const [cleanDescription, setCleanDescription] = useState('');
   
+  // Use the custom dark mode hook
+  const isDarkMode = useDarkMode();
+  
   // Clean the description when it changes
   useEffect(() => {
     setCleanDescription(stripHtmlTags(description));
@@ -63,7 +67,11 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
   
   return (
     <div className="relative">
-      <p className={`text-gray-600 text-sm leading-relaxed ${
+      <p className={`${getThemeClasses(
+        isDarkMode, 
+        'text-gray-600', 
+        'text-gray-300'
+      )} text-sm leading-relaxed ${
         expanded ? '' : 'line-clamp-2'
       }`}>
         {cleanDescription}
@@ -72,7 +80,11 @@ const EventDescription: React.FC<EventDescriptionProps> = ({
       {needsToggle && (
         <button 
           onClick={handleToggle}
-          className="mt-1 text-blue-500 text-xs font-medium flex items-center hover:text-blue-600 transition-colors focus:outline-none rounded"
+          className={`mt-1 ${getThemeClasses(
+            isDarkMode,
+            'text-blue-500 hover:text-blue-600',
+            'text-blue-400 hover:text-blue-300'
+          )} text-xs font-medium flex items-center transition-colors focus:outline-none rounded`}
         >
           {expanded ? (
             <>Show less <ChevronUp className="h-3 w-3 ml-1" /></>
