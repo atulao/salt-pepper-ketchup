@@ -3,12 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
 
-interface DarkModeToggleProps {
+interface ThemeToggleProps {
   className?: string;
   onModeChange?: (isDarkMode: boolean) => void;
 }
 
-const DarkModeToggle: React.FC<DarkModeToggleProps> = ({ 
+const ThemeToggle: React.FC<ThemeToggleProps> = ({ 
   className = '',
   onModeChange 
 }) => {
@@ -19,26 +19,21 @@ const DarkModeToggle: React.FC<DarkModeToggleProps> = ({
     const savedMode = localStorage.getItem('uiMode');
     const initialDarkMode = savedMode === 'dark';
     setIsDarkMode(initialDarkMode);
-    
-    // Notify parent component if callback exists
+  }, []);
+  
+  // Separate useEffect for the callback to avoid state updates during render
+  useEffect(() => {
     if (onModeChange) {
-      onModeChange(initialDarkMode);
+      onModeChange(isDarkMode);
     }
-  }, [onModeChange]);
+  }, [isDarkMode, onModeChange]);
 
   // Toggle mode function
   const toggleMode = () => {
     setIsDarkMode(prev => {
       const newMode = !prev;
-      
       // Save preference
       localStorage.setItem('uiMode', newMode ? 'dark' : 'light');
-      
-      // Notify parent component if callback exists
-      if (onModeChange) {
-        onModeChange(newMode);
-      }
-      
       return newMode;
     });
   };
@@ -68,4 +63,4 @@ const DarkModeToggle: React.FC<DarkModeToggleProps> = ({
   );
 };
 
-export default DarkModeToggle;
+export default ThemeToggle;
