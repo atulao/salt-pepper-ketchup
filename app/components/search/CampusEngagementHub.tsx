@@ -15,7 +15,8 @@ import { useFavorites } from '../../hooks/useFavorites';
 import { Event } from '../../types/event';
 import { FilterOption, FilterCount } from '../../types/filters';
 import { isResidenceLifeEvent } from '../../utils/data-fetcher';
-import { Tag, Info, X, User } from 'lucide-react';
+import { Tag, Info, X, User, Building } from 'lucide-react';
+import Link from 'next/link';
 
 // Constants moved to separate file or kept here as needed
 const EVENTS_PER_PAGE = 5;
@@ -334,10 +335,6 @@ const CampusEngagementHub: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-50 transition-colors duration-300">
-      <div className="w-full max-w-3xl px-4 flex justify-end mt-4">
-        <ThemeToggle onModeChange={handleModeChange} />
-      </div>
-      
       <div className="mt-10 md:mt-16 mb-6 text-center px-4">
         <h1 className="text-4xl md:text-5xl font-bold text-blue-600 mb-3">Salt-Pepper-Ketchup</h1>
         <p className="text-lg md:text-xl text-gray-600">Your campus guide for events, resources, and connections</p>
