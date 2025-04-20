@@ -13,7 +13,6 @@ import { useEvents } from '../../hooks/useEvents';
 import { usePersona } from '../../hooks/usePersona';
 import { useFavorites } from '../../hooks/useFavorites';
 import { Event } from '../../types/event';
-import { FilterOption, FilterCount } from '../../types/filters';
 import { isResidenceLifeEvent } from '../../utils/data-fetcher';
 import { Tag, Info, X, User, Building } from 'lucide-react';
 import Link from 'next/link';
@@ -28,18 +27,62 @@ const EXAMPLE_QUERIES = [
   "Career workshops for engineering majors"
 ];
 
-// Define all possible filter options
-const ALL_FILTER_OPTIONS: FilterOption[] = [
-  { id: 'today', label: 'Today', icon: 'Clock' },
-  { id: 'tomorrow', label: 'Tomorrow', icon: 'Calendar' },
-  { id: 'this-week', label: 'This Week', icon: 'Calendar' },
-  { id: 'weekend', label: 'Weekend', icon: 'Calendar' },
-  { id: 'academic', label: 'Academic', icon: 'BookOpen' },
-  { id: 'social', label: 'Social', icon: 'Users' },
-  { id: 'career', label: 'Career', icon: 'Briefcase' },
-  { id: 'food', label: 'Free Food', icon: 'Coffee' },
-  { id: 'residence', label: 'Residence Life', icon: 'Home' },
-];
+// Define the filter option type
+export type FilterOption = {
+  id: string;
+  label: string;
+  icon: string;
+};
+
+// Define the filter count type
+export interface FilterCount {
+  id: string;
+  count: number;
+}
+
+// Define the filter categories structure
+export type FilterCategories = {
+  [category: string]: FilterOption[];
+};
+
+// Filter categories and options
+export const FILTER_OPTIONS: FilterCategories = {
+  "Date": [
+    { id: 'today', label: 'Today', icon: 'Clock' },
+    { id: 'tomorrow', label: 'Tomorrow', icon: 'Calendar' },
+    { id: 'this-week', label: 'This Week', icon: 'Calendar' },
+    { id: 'weekend', label: 'Weekend', icon: 'Calendar' },
+  ],
+  "Time of Day": [
+    { id: 'morning', label: 'Morning', icon: 'Sunrise' },
+    { id: 'afternoon', label: 'Afternoon', icon: 'Sun' },
+    { id: 'evening', label: 'Evening', icon: 'Sunset' },
+  ],
+  "Perks": [
+    { id: 'free-food', label: 'Free Food', icon: 'Utensils' },
+    { id: 'free-swag', label: 'Free Swag', icon: 'Gift' },
+  ],
+  "Purpose": [
+    { id: 'career', label: 'Career', icon: 'Briefcase' },
+    { id: 'networking', label: 'Networking', icon: 'Users2' },
+    { id: 'workshop-skillbuild', label: 'Workshop / Skill-Building', icon: 'Hammer' },
+    { id: 'service-volunteering', label: 'Service / Volunteering', icon: 'Heart' },
+  ],
+  "Format": [
+    { id: 'in-person', label: 'In-Person', icon: 'MapPin' },
+    { id: 'virtual', label: 'Virtual', icon: 'MonitorPlay' },
+    { id: 'requires-rsvp', label: 'Requires RSVP', icon: 'CalendarCheck' },
+  ],
+  "Theme": [
+    { id: 'health-wellness', label: 'Health & Wellness', icon: 'HeartPulse' },
+    { id: 'arts-culture', label: 'Arts & Culture', icon: 'Palette' },
+    { id: 'sports-recreation', label: 'Sports & Recreation', icon: 'Trophy' },
+    { id: 'faith-spirituality', label: 'Faith & Spirituality', icon: 'Flower2' },
+  ],
+};
+
+// Convert the nested structure to a flat list for internal use
+export const ALL_FILTER_OPTIONS: FilterOption[] = Object.values(FILTER_OPTIONS).flat();
 
 const CampusEngagementHub: React.FC = () => {
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -75,14 +118,10 @@ const CampusEngagementHub: React.FC = () => {
   } = usePersona();
   
   // Filter options based on persona
-  const FILTER_OPTIONS = useMemo(() => {
-    if (personaType === 'resident') {
-      return ALL_FILTER_OPTIONS; // Show all filters for residents
-    } else {
-      // For commuters, exclude residence life filter
-      return ALL_FILTER_OPTIONS.filter(option => option.id !== 'residence');
-    }
-  }, [personaType]);
+  const filterOptions = useMemo(() => {
+    // We're now using the same filters for both personas
+    return ALL_FILTER_OPTIONS;
+  }, []);
   
   // State for filters
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
@@ -208,11 +247,12 @@ const CampusEngagementHub: React.FC = () => {
 
   // Convert filterCounts object to FilterCount array for FilterPanel
   const filterCountsArray = useMemo(() => {
-    return FILTER_OPTIONS.map(option => ({
-      id: option.id,
-      count: filterCounts[option.id] || 0
+    // Create an array from the filterCounts object
+    return Object.keys(filterCounts).map(key => ({
+      id: key,
+      count: filterCounts[key] || 0
     }));
-  }, [FILTER_OPTIONS, filterCounts]);
+  }, [filterCounts]);
   
   // Handle tag click for filtering
   const handleTagClick = (tag: string) => {
@@ -377,11 +417,11 @@ const CampusEngagementHub: React.FC = () => {
 
         {/* Filter Panel Component */}
         <FilterPanel
-          options={FILTER_OPTIONS}
+          options={filterOptions}
           activeFilters={activeFilters}
           onToggle={toggleFilter}
           counts={filterCountsArray}
-          className=""
+          categories={FILTER_OPTIONS}
         />
 
         {/* Tag Filter Display */}

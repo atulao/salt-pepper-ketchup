@@ -776,7 +776,7 @@ body {
   background-color: var(--btn-red-hover);
 }
 
-/* Tag Styles */
+/* Event tags */
 .event-tag {
   @apply inline-flex items-center px-2 py-1 rounded-md text-xs font-medium transition-all;
   border-width: 1px;

@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Event } from '../types/event';
 import { fetchNJITEvents, isResidenceLifeEvent } from '../utils/data-fetcher';
+import { isCareerEvent } from '../utils/keyword-matcher';
 
 // Function to extract the date part for grouping
 const getDateKey = (dateString: string): string => {
@@ -22,68 +23,86 @@ const formatDate = (date: Date): string => {
   });
 };
 
-// Helper function to check if a date string contains a specific date
-const dateIncludes = (dateString: string, targetDate: Date): boolean => {
-  // Format target date same way as event dates
-  const targetDateStr = formatDate(targetDate);
-  
-  // Remove year for comparison as we're just comparing month and day
-  const targetMonthDay = targetDateStr.split(',')[0].trim();
-  const eventMonthDay = dateString.split(',')[0].trim();
-  
-  return eventMonthDay === targetMonthDay;
+// Helper functions for date manipulation
+const formatDateForComparison = (date: Date): string => {
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
 };
 
-// Helper to get start and end of week
-const getWeekRange = (): [Date, Date] => {
-  const now = new Date();
-  const currentDay = now.getDay(); // 0 = Sunday, 6 = Saturday
-  
-  // Calculate days to beginning of week (Monday)
-  const daysToMonday = currentDay === 0 ? 6 : currentDay - 1;
-  
-  // Calculate start and end of week
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - daysToMonday);
-  startOfWeek.setHours(0, 0, 0, 0);
-  
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
-  endOfWeek.setHours(23, 59, 59, 999);
-  
-  return [startOfWeek, endOfWeek];
+const getTodayDateString = (): string => {
+  return formatDateForComparison(new Date());
 };
 
-// Helper to get weekend dates
-const getWeekendDates = (): Date[] => {
-  const now = new Date();
-  const currentDay = now.getDay(); // 0 = Sunday, 6 = Saturday
-  
-  // Calculate days until next Saturday
-  const daysToSaturday = currentDay === 6 ? 0 : 6 - currentDay;
-  const daysToSunday = currentDay === 0 ? 0 : 7 - currentDay;
-  
-  // Calculate weekend dates
-  const saturday = new Date(now);
-  saturday.setDate(now.getDate() + daysToSaturday);
-  
-  const sunday = new Date(now);
-  sunday.setDate(now.getDate() + daysToSunday);
-  
-  return [saturday, sunday];
-};
-
-// Check if event is happening tomorrow
-const isEventTomorrow = (event: Event): boolean => {
+const getTomorrowDateString = (): string => {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  return dateIncludes(event.date, tomorrow);
+  return formatDateForComparison(tomorrow);
+};
+
+const getWeekDates = (): string[] => {
+  const today = new Date();
+  const weekDates: string[] = [];
+  
+  for (let i = 0; i < 7; i++) {
+    const day = new Date();
+    day.setDate(today.getDate() + i);
+    weekDates.push(formatDateForComparison(day));
+  }
+  
+  return weekDates;
+};
+
+const getWeekendDates = (): string[] => {
+  const today = new Date();
+  const weekendDates: string[] = [];
+  
+  // Find next Saturday and Sunday
+  let dayOfWeek = today.getDay(); // 0 = Sunday, 6 = Saturday
+  let daysUntilSaturday = (6 - dayOfWeek) % 7;
+  
+  // Saturday
+  const saturday = new Date();
+  saturday.setDate(today.getDate() + daysUntilSaturday);
+  weekendDates.push(formatDateForComparison(saturday));
+  
+  // Sunday
+  const sunday = new Date();
+  sunday.setDate(today.getDate() + daysUntilSaturday + 1);
+  weekendDates.push(formatDateForComparison(sunday));
+  
+  return weekendDates;
+};
+
+// Determine if a date string matches a target date
+const dateIncludes = (dateString: string, targetDate: string): boolean => {
+  return dateString.includes(targetDate);
+};
+
+// Helper functions to check event dates
+const isToday = (dateString: string): boolean => {
+  return dateIncludes(dateString, getTodayDateString());
+};
+
+const isTomorrow = (dateString: string): boolean => {
+  return dateIncludes(dateString, getTomorrowDateString());
+};
+
+const isThisWeek = (dateString: string): boolean => {
+  return getWeekDates().some(date => dateIncludes(dateString, date));
+};
+
+const isWeekend = (dateString: string): boolean => {
+  const weekendDates = getWeekendDates();
+  return weekendDates.some(date => dateIncludes(dateString, date));
 };
 
 // Check if event is happening today
 const isEventToday = (event: Event): boolean => {
   const today = new Date();
-  return dateIncludes(event.date, today);
+  return dateIncludes(event.date, getTodayDateString());
 };
 
 // Check if event is happening this week
@@ -105,6 +124,238 @@ const isEventOnWeekend = (event: Event): boolean => {
   return weekendDates.some(date => dateIncludes(event.date, date));
 };
 
+// List of all filter categories (used for counts)
+export const ALL_FILTERS = [
+  // Date filters
+  'today', 'tomorrow', 'this-week', 'weekend',
+  
+  // Categories
+  'academic', 'social', 'career', 'food',
+  
+  // Purpose
+  'networking', 'workshop-skillbuild', 'service-volunteering',
+  
+  // Themes
+  'health-wellness', 'arts-culture', 'sports-recreation', 'faith-spirituality',
+  
+  // Perks
+  'free-food', 'free-swag',
+  
+  // Format
+  'in-person', 'virtual', 'requires-rsvp',
+  
+  // Time of Day
+  'morning', 'afternoon', 'evening',
+  
+  // Residence Life specific
+  'residence'
+];
+
+/**
+ * Check if an event passes the current active filters
+ */
+const eventPassesFilters = (event: Event, activeFilters: string[]): boolean => {
+  // If no filters are active, all events pass
+  if (activeFilters.length === 0) return true;
+  
+  // Group filters by category
+  const dateFilters = activeFilters.filter(f => ['today', 'tomorrow', 'this-week', 'weekend'].includes(f));
+  const timeOfDayFilters = activeFilters.filter(f => ['morning', 'afternoon', 'evening'].includes(f));
+  const perksFilters = activeFilters.filter(f => ['free-food', 'free-swag'].includes(f));
+  const purposeFilters = activeFilters.filter(f => ['career', 'networking', 'workshop-skillbuild', 'service-volunteering'].includes(f));
+  const themeFilters = activeFilters.filter(f => ['health-wellness', 'arts-culture', 'sports-recreation', 'faith-spirituality'].includes(f));
+  const formatFilters = activeFilters.filter(f => ['in-person', 'virtual', 'requires-rsvp'].includes(f));
+  const residenceFilters = activeFilters.filter(f => ['residence'].includes(f));
+  
+  // Check date filters - pass if matches ANY selected date filter
+  if (dateFilters.length > 0) {
+    const passesDateFilter = dateFilters.some(filter => {
+      if (filter === 'today') return isEventToday(event);
+      if (filter === 'tomorrow') return isTomorrow(event.date);
+      if (filter === 'this-week') return isEventThisWeek(event);
+      if (filter === 'weekend') return isEventOnWeekend(event);
+      return false;
+    });
+    if (!passesDateFilter) return false;
+  }
+  
+  // Check time of day filters - pass if matches ANY selected time filter
+  if (timeOfDayFilters.length > 0) {
+    const passesTimeFilter = timeOfDayFilters.some(filter => {
+      if (filter === 'morning') return event.timeOfDay === 'morning';
+      if (filter === 'afternoon') return event.timeOfDay === 'afternoon';
+      if (filter === 'evening') return event.timeOfDay === 'evening';
+      return false;
+    });
+    if (!passesTimeFilter) return false;
+  }
+  
+  // Check perks filters - pass if matches ANY selected perk
+  if (perksFilters.length > 0) {
+    const passesPerkFilter = perksFilters.some(filter => {
+      if (filter === 'free-food') return event.hasFood;
+      if (filter === 'free-swag') return event.hasSwag;
+      return false;
+    });
+    if (!passesPerkFilter) return false;
+  }
+  
+  // Check purpose filters - pass if matches ANY selected purpose
+  if (purposeFilters.length > 0) {
+    const passesPurposeFilter = purposeFilters.some(filter => {
+      if (filter === 'career') return event.isCareer;
+      if (filter === 'networking') return event.isNetworking;
+      if (filter === 'workshop-skillbuild') return event.isWorkshop;
+      if (filter === 'service-volunteering') return event.isService;
+      return false;
+    });
+    if (!passesPurposeFilter) return false;
+  }
+  
+  // Check theme filters - pass if matches ANY selected theme
+  if (themeFilters.length > 0) {
+    const passesThemeFilter = themeFilters.some(filter => {
+      if (filter === 'health-wellness') return event.isHealthWellness;
+      if (filter === 'arts-culture') return event.isArtsCulture;
+      if (filter === 'sports-recreation') return event.isSportsRec;
+      if (filter === 'faith-spirituality') return event.isFaithSpirituality;
+      return false;
+    });
+    if (!passesThemeFilter) return false;
+  }
+  
+  // Check format filters - pass if matches ANY selected format
+  if (formatFilters.length > 0) {
+    const passesFormatFilter = formatFilters.some(filter => {
+      if (filter === 'in-person') return event.format === 'in-person';
+      if (filter === 'virtual') return event.format === 'virtual';
+      if (filter === 'requires-rsvp') return event.requiresRSVP;
+      return false;
+    });
+    if (!passesFormatFilter) return false;
+  }
+  
+  // Check residence filters
+  if (residenceFilters.length > 0) {
+    const passesResidenceFilter = residenceFilters.some(filter => {
+      if (filter === 'residence') return isResidenceLifeEvent(event);
+      return false;
+    });
+    if (!passesResidenceFilter) return false;
+  }
+  
+  // If we got here, the event passed all filter categories
+  return true;
+};
+
+/**
+ * Calculate filter counts for all available filters based on the current events
+ */
+const calculateFilterCounts = (applicableEvents: Event[]): { [key: string]: number } => {
+  const counts: { [key: string]: number } = {};
+  
+  // Count date filters
+  counts['today'] = applicableEvents.filter(event => isEventToday(event)).length;
+  counts['tomorrow'] = applicableEvents.filter(event => isTomorrow(event.date)).length;
+  counts['this-week'] = applicableEvents.filter(event => isEventThisWeek(event)).length;
+  counts['weekend'] = applicableEvents.filter(event => isEventOnWeekend(event)).length;
+  
+  // Count perks
+  counts['free-food'] = applicableEvents.filter(event => event.hasFood).length;
+  counts['free-swag'] = applicableEvents.filter(event => event.hasSwag).length;
+  
+  // Count purpose
+  counts['career'] = applicableEvents.filter(event => event.category === 'career').length;
+  counts['networking'] = applicableEvents.filter(event => event.isNetworking).length;
+  counts['workshop-skillbuild'] = applicableEvents.filter(event => event.isWorkshop).length;
+  counts['service-volunteering'] = applicableEvents.filter(event => event.isService).length;
+  
+  // Count theme
+  counts['health-wellness'] = applicableEvents.filter(event => event.isHealthWellness).length;
+  counts['arts-culture'] = applicableEvents.filter(event => event.isArtsCulture).length;
+  counts['sports-recreation'] = applicableEvents.filter(event => event.isSportsRec).length;
+  counts['faith-spirituality'] = applicableEvents.filter(event => event.isFaithSpirituality).length;
+  
+  // Count format
+  counts['in-person'] = applicableEvents.filter(event => event.format === 'in-person').length;
+  counts['virtual'] = applicableEvents.filter(event => event.format === 'virtual').length;
+  counts['requires-rsvp'] = applicableEvents.filter(event => event.requiresRSVP).length;
+  
+  // Count time of day
+  counts['morning'] = applicableEvents.filter(event => event.timeOfDay === 'morning').length;
+  counts['afternoon'] = applicableEvents.filter(event => event.timeOfDay === 'afternoon').length;
+  counts['evening'] = applicableEvents.filter(event => event.timeOfDay === 'evening').length;
+  
+  // Special filters
+  counts['residence'] = applicableEvents.filter(event => isResidenceLifeEvent(event)).length;
+  
+  return counts;
+};
+
+// Helper to get week dates for this week
+const getWeekRange = (): [Date, Date] => {
+  const now = new Date();
+  const currentDay = now.getDay(); // 0 = Sunday, 6 = Saturday
+  
+  // Calculate days to beginning of week (Monday)
+  const daysToMonday = currentDay === 0 ? 6 : currentDay - 1;
+  
+  // Calculate start and end of week
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - daysToMonday);
+  startOfWeek.setHours(0, 0, 0, 0);
+  
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
+  
+  return [startOfWeek, endOfWeek];
+};
+
+// Add function to save recent filter combinations
+const saveRecentFilterCombination = (activeFilters: string[]) => {
+  // Don't save empty filter combinations
+  if (activeFilters.length === 0) return;
+  
+  try {
+    // Load existing recent combinations
+    const recentFiltersJson = localStorage.getItem('recentFilterCombinations');
+    const recentFilters = recentFiltersJson ? JSON.parse(recentFiltersJson) : [];
+    
+    // Create string representation of current filter set for comparison
+    const currentFilterSet = [...activeFilters].sort().join(',');
+    
+    // Check if this combination already exists and remove if it does
+    const filteredCombinations = recentFilters.filter((combo: string) => combo !== currentFilterSet);
+    
+    // Add current combination to the front
+    filteredCombinations.unshift(currentFilterSet);
+    
+    // Keep only the 3 most recent combinations
+    const limitedCombinations = filteredCombinations.slice(0, 3);
+    
+    // Save back to localStorage
+    localStorage.setItem('recentFilterCombinations', JSON.stringify(limitedCombinations));
+  } catch (error) {
+    console.error('Error saving recent filter combinations:', error);
+  }
+};
+
+// Add function to get recent filter combinations
+const getRecentFilterCombinations = (): string[][] => {
+  try {
+    const recentFiltersJson = localStorage.getItem('recentFilterCombinations');
+    if (!recentFiltersJson) return [];
+    
+    const recentFilters = JSON.parse(recentFiltersJson);
+    // Convert string representations back to arrays
+    return recentFilters.map((combo: string) => combo ? combo.split(',') : []);
+  } catch (error) {
+    console.error('Error getting recent filter combinations:', error);
+    return [];
+  }
+};
+
 export const useEvents = (
   query: string,
   activeFilters: string[],
@@ -120,6 +371,13 @@ export const useEvents = (
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [filterCounts, setFilterCounts] = useState<{[key: string]: number}>({});
+
+  // Save filter combinations when active filters change
+  useEffect(() => {
+    if (activeFilters.length > 0) {
+      saveRecentFilterCombination(activeFilters);
+    }
+  }, [activeFilters]);
 
   // Fetch events data
   useEffect(() => {
@@ -212,7 +470,7 @@ export const useEvents = (
           
           // Filter strictly for today's events
           const todayEvents = filteredEvents.filter(event => 
-            dateIncludes(event.date, today)
+            dateIncludes(event.date, getTodayDateString())
           );
           
           // If no events today, provide helpful message
@@ -270,7 +528,7 @@ export const useEvents = (
         // Apply date filters
         if (activeFilters.includes('today')) {
           const today = new Date();
-          filteredEvents = filteredEvents.filter(event => dateIncludes(event.date, today));
+          filteredEvents = filteredEvents.filter(event => dateIncludes(event.date, getTodayDateString()));
           
           if (filteredEvents.length === 0) {
             setErrorMessage('No events found for today. Try checking other days.');
@@ -281,7 +539,7 @@ export const useEvents = (
           const tomorrow = new Date();
           tomorrow.setDate(tomorrow.getDate() + 1);
           
-          filteredEvents = filteredEvents.filter(event => dateIncludes(event.date, tomorrow));
+          filteredEvents = filteredEvents.filter(event => dateIncludes(event.date, getTomorrowDateString()));
           
           if (filteredEvents.length === 0) {
             setErrorMessage('No events found for tomorrow. Try checking other days.');
@@ -359,19 +617,9 @@ export const useEvents = (
         }
         
         // Apply category filters
-        if (activeFilters.some(filter => ['food', 'academic', 'social', 'career', 'residence'].includes(filter))) {
-          filteredEvents = filteredEvents.filter(event => {
-            // Check category filters
-            if (activeFilters.includes(event.category)) return true;
-            
-            // Check for 'food' filter
-            if (activeFilters.includes('food') && event.hasFood) return true;
-            
-            // Check for 'residence' filter
-            if (activeFilters.includes('residence') && isResidenceLifeEvent(event)) return true;
-            
-            return false;
-          });
+        if (activeFilters.length > 0) {
+          // Use the eventPassesFilters function for consistent filter behavior
+          filteredEvents = filteredEvents.filter(event => eventPassesFilters(event, activeFilters));
           
           if (filteredEvents.length === 0) {
             setErrorMessage('No events match your selected filters. Try adjusting your criteria.');
@@ -445,16 +693,41 @@ export const useEvents = (
     // Count events by category
     counts['academic'] = applicableEvents.filter(event => event.category === 'academic').length;
     counts['social'] = applicableEvents.filter(event => event.category === 'social').length;
-    counts['career'] = applicableEvents.filter(event => event.category === 'career').length;
+    counts['career'] = applicableEvents.filter(event => event.isCareer || event.category === 'career').length;
     
     // Count residence events
     counts['residence'] = applicableEvents.filter(event => isResidenceLifeEvent(event)).length;
     
     // Count date-based events
     counts['today'] = applicableEvents.filter(event => isEventToday(event)).length;
-    counts['tomorrow'] = applicableEvents.filter(event => isEventTomorrow(event)).length;
+    counts['tomorrow'] = applicableEvents.filter(event => isTomorrow(event.date)).length;
     counts['this-week'] = applicableEvents.filter(event => isEventThisWeek(event)).length;
     counts['weekend'] = applicableEvents.filter(event => isEventOnWeekend(event)).length;
+    
+    // Count events by Purpose
+    counts['networking'] = applicableEvents.filter(event => event.isNetworking).length;
+    counts['workshop-skillbuild'] = applicableEvents.filter(event => event.isWorkshop).length;
+    counts['service-volunteering'] = applicableEvents.filter(event => event.isService).length;
+    
+    // Count events by Theme
+    counts['health-wellness'] = applicableEvents.filter(event => event.isHealthWellness).length;
+    counts['arts-culture'] = applicableEvents.filter(event => event.isArtsCulture).length;
+    counts['sports-recreation'] = applicableEvents.filter(event => event.isSportsRec).length;
+    counts['faith-spirituality'] = applicableEvents.filter(event => event.isFaithSpirituality).length;
+    
+    // Count events by additional perks
+    counts['free-food'] = applicableEvents.filter(event => event.hasFood).length;
+    counts['free-swag'] = applicableEvents.filter(event => event.hasSwag).length;
+    
+    // Count events by format and logistics
+    counts['virtual'] = applicableEvents.filter(event => event.format === 'virtual').length;
+    counts['in-person'] = applicableEvents.filter(event => event.format === 'in-person').length;
+    counts['requires-rsvp'] = applicableEvents.filter(event => event.requiresRSVP).length;
+    
+    // Count events by time of day
+    counts['morning'] = applicableEvents.filter(event => event.timeOfDay === 'morning').length;
+    counts['afternoon'] = applicableEvents.filter(event => event.timeOfDay === 'afternoon').length;
+    counts['evening'] = applicableEvents.filter(event => event.timeOfDay === 'evening').length;
     
     setFilterCounts(counts);
   };
@@ -527,7 +800,8 @@ export const useEvents = (
     hasMore,
     errorMessage,
     setErrorMessage,
-    filterCounts
+    filterCounts,
+    recentFilterCombinations: getRecentFilterCombinations()
   };
 };
 

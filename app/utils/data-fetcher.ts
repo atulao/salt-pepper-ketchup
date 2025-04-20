@@ -4,6 +4,8 @@
  */
 
 import { Event } from '../types/event';
+import { generateAdvancedTags, getTimeOfDay, getEventFormat, requiresRSVP, 
+         hasSwag, matchesKeywords, isCareerEvent, isNetworking, isWorkshop, isService, isHealthWellness, isArtsCulture, isSportsRec, isFaithSpirituality } from './keyword-matcher';
 
 // Use a proxy API route instead of directly calling the NJIT API
 const API_URL = '/api/proxy';
@@ -18,17 +20,24 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 export const isResidenceLifeEvent = (event: Event): boolean => {
   // List of residence hall locations
   const residenceLocations = [
-    'cypress residence hall', 'cypress hall',
+    'cypress', 'cypress residence hall', 'cypress hall', 'cypress lounge',
     'laurel residence hall', 'laurel hall', 'laurel extension',
     'oak residence hall', 'oak hall',
     'redwood residence hall', 'redwood hall', 'redwood glass lounge', 'redwood 1st floor lounge',
-    'maple hall', 'maple kitchen', 'maple hall club room', 'maple club room',
-    'martinson honors residence hall', 'honors residence',
+    'maple hall', 'maple kitchen', 'maple hall club room', 'maple club room', 'maple terrace',
+    'martinson honors residence hall', 'honors residence', 
     'warren street village', 'greek residence', 'dormitory'
   ];
   
   // Check if the event is in a residence hall location
-  if (residenceLocations.some(loc => event.location.toLowerCase().includes(loc))) {
+  const eventLocation = event.location.toLowerCase();
+  if (residenceLocations.some(loc => eventLocation.includes(loc))) {
+    return true;
+  }
+  
+  // Check if the event title mentions a residence hall
+  const eventTitle = event.title.toLowerCase();
+  if (residenceLocations.some(loc => eventTitle.includes(loc))) {
     return true;
   }
   
@@ -161,7 +170,8 @@ const processAPIEvents = (apiEvents: any[]): Event[] => {
       uniqueTags.push('commuter');
     }
     
-    return {
+    // Create base event object
+    const event: Event = {
       id: njitEvent.id.toString(),
       title: njitEvent.name,
       description: njitEvent.description || 'No description available',
@@ -176,6 +186,54 @@ const processAPIEvents = (apiEvents: any[]): Event[] => {
       imageUrl: njitEvent.imagePath,
       relevanceScore: 70 // Default score, will be adjusted based on query and filters
     };
+    
+    // Add advanced filtering properties
+    const fullText = `${event.title} ${event.description} ${event.organizerName}`.toLowerCase();
+    
+    // Purpose tags
+    const hasNetworking = isNetworking(event);
+    const hasWorkshop = isWorkshop(event);
+    const hasService = isService(event);
+    const hasCareer = isCareerEvent(event);
+    
+    // Theme tags
+    const hasHealthWellness = isHealthWellness(event);
+    const hasArtsCulture = isArtsCulture(event);
+    const hasSportsRec = isSportsRec(event);
+    const hasFaithSpirituality = isFaithSpirituality(event);
+    
+    // Advanced tags 
+    const advancedTags = generateAdvancedTags(event);
+    uniqueTags.push(...advancedTags);
+    
+    // Enhance event with additional properties
+    const enhancedEvent: Event = {
+      ...event,
+      tags: [...new Set(uniqueTags)], // Remove duplicates again after adding advanced tags
+      
+      // Purpose properties
+      isNetworking: hasNetworking,
+      isWorkshop: hasWorkshop,
+      isService: hasService,
+      
+      // Theme properties
+      isHealthWellness: hasHealthWellness,
+      isArtsCulture: hasArtsCulture,
+      isSportsRec: hasSportsRec,
+      isFaithSpirituality: hasFaithSpirituality,
+      
+      // Format and logistics
+      format: getEventFormat(event),
+      requiresRSVP: requiresRSVP(event),
+      
+      // Additional perks
+      hasSwag: hasSwag(event),
+      
+      // Time of day
+      timeOfDay: getTimeOfDay(event)
+    };
+    
+    return enhancedEvent;
   });
 };
 
