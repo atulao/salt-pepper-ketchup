@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Users, Loader, Search, Filter, List, Grid, Info } from 'lucide-react'; // Add Info icon
 import Image from 'next/image'; // Import Image for profile pictures
 import '../styles/organizationAvatar.css'; // Import the avatar styles
+import { useDarkMode } from '../utils/theme-utils'; // Import the hook
 
 // Define a type for the organization data from the API
 interface Organization {
@@ -88,6 +89,9 @@ const SPECIAL_MAPPINGS: { [key: string]: string } = {
 // *** End special mappings ***
 
 const OrganizationsPage: React.FC = () => {
+  // Use the hook to get theme state
+  const isDarkMode = useDarkMode();
+  
   // State management
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -405,8 +409,13 @@ const OrganizationsPage: React.FC = () => {
     setCurrentPage(1);
   };
 
+  // Log theme state on initial render and when it changes
+  useEffect(() => {
+    console.log(`--- Debug OrganizationsPage: Detected isDarkMode: ${isDarkMode}`);
+  }, [isDarkMode]);
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
       <TopNavBar />
       
       <div className="py-8 px-4">
@@ -414,18 +423,18 @@ const OrganizationsPage: React.FC = () => {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center mb-8 gap-4">
             <div className="flex items-center">
-              <div className="h-12 w-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mr-4">
-                <Users className="h-6 w-6 text-green-700 dark:text-green-300" />
+              <div className="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                <Users className="h-6 w-6 text-green-700" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Organizations Directory</h1>
-                <p className="text-gray-600 dark:text-gray-400">Student clubs and groups at NJIT</p>
+                <h1 className="text-3xl font-bold text-gray-800">Organizations Directory</h1>
+                <p className="text-gray-600">Student clubs and groups at NJIT</p>
               </div>
             </div>
           </div>
           
           {/* Search and Filters */}
-          <div className="mb-6 bg-white dark:bg-gray-900 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700">
+          <div className="mb-6 bg-white rounded-lg shadow p-4 border border-gray-200">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-grow">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -436,7 +445,7 @@ const OrganizationsPage: React.FC = () => {
                   value={searchTerm}
                   onChange={handleSearchChange}
                   placeholder="Search organizations..."
-                  className="pl-10 w-full py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="pl-10 w-full py-2 px-4 border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               
@@ -444,8 +453,8 @@ const OrganizationsPage: React.FC = () => {
                 <button 
                   onClick={() => setViewMode('grid')}
                   className={`p-2 rounded-md ${viewMode === 'grid' 
-                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'}`}
+                    ? 'bg-blue-100 text-blue-700' 
+                    : 'bg-gray-100 text-gray-700'}`}
                   aria-label="Grid view"
                 >
                   <Grid className="h-5 w-5" />
@@ -453,8 +462,8 @@ const OrganizationsPage: React.FC = () => {
                 <button 
                   onClick={() => setViewMode('list')}
                   className={`p-2 rounded-md ${viewMode === 'list' 
-                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'}`}
+                    ? 'bg-blue-100 text-blue-700' 
+                    : 'bg-gray-100 text-gray-700'}`}
                   aria-label="List view"
                 >
                   <List className="h-5 w-5" />
@@ -466,12 +475,12 @@ const OrganizationsPage: React.FC = () => {
             {availableCategories.length > 0 && (
               <div className="mt-4">
                 <div className="flex items-center mb-2">
-                  <Filter className="h-4 w-4 text-gray-500 dark:text-gray-400 mr-2" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by category:</span>
+                  <Filter className="h-4 w-4 text-gray-500 mr-2" />
+                  <span className="text-sm font-medium text-gray-700">Filter by category:</span>
                   {selectedCategories.length > 0 && (
                     <button 
                       onClick={clearFilters}
-                      className="ml-auto text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                      className="ml-auto text-xs text-blue-600 hover:underline"
                     >
                       Clear filters
                     </button>
@@ -494,8 +503,8 @@ const OrganizationsPage: React.FC = () => {
                           onClick={() => toggleCategory(category)}
                           className={`text-xs px-3 py-1 rounded-full transition-colors flex items-center gap-1 ${
                             selectedCategories.includes(category)
-                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700'
-                              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
+                              ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                              : 'bg-gray-100 text-gray-700 border border-gray-200'
                           }`}
                         >
                           {category}
@@ -512,22 +521,22 @@ const OrganizationsPage: React.FC = () => {
           </div>
           
           {/* Content Area - Display Organizations */}
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+          <div className="bg-white rounded-lg shadow border border-gray-200">
             {isLoading && (
-              <div className="flex flex-col items-center text-gray-500 dark:text-gray-400 p-8">
+              <div className="flex flex-col items-center text-gray-500 p-8">
                 <Loader className="h-8 w-8 animate-spin mb-2" />
                 <p>Loading organizations...</p>
               </div>
             )}
             {error && !isLoading && (
-              <p className="text-red-600 dark:text-red-400 p-4">Error loading organizations: {error}</p>
+              <p className="text-red-600 p-4">Error loading organizations: {error}</p>
             )}
             {!isLoading && !error && filteredOrganizations.length === 0 && (
               <div className="p-8 text-center">
-                <p className="text-gray-500 dark:text-gray-400 mb-2">No organizations found matching your criteria.</p>
+                <p className="text-gray-500 mb-2">No organizations found matching your criteria.</p>
                 <button
                   onClick={clearFilters}
-                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                  className="text-blue-600 hover:underline"
                 >
                   Clear all filters
                 </button>
@@ -536,11 +545,11 @@ const OrganizationsPage: React.FC = () => {
             {!isLoading && !error && filteredOrganizations.length > 0 && (
               <>
                 {viewMode === 'grid' ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-gray-200 dark:bg-gray-700">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-gray-200">
                     {filteredOrganizations.map((org) => (
                       <div 
                         key={org.Id || org.WebsiteKey}
-                        className="bg-white dark:bg-gray-900 p-4 flex flex-col items-start group hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        className="bg-white p-4 flex flex-col items-start group hover:bg-gray-50 transition-colors"
                       >
                         <img 
                           src={`/api/organizationAvatar?name=${encodeURIComponent(org.Name)}&size=100`}
@@ -548,10 +557,10 @@ const OrganizationsPage: React.FC = () => {
                           className="organization-avatar mb-3"
                         />
 
-                        <h3 className="font-semibold text-md text-gray-800 dark:text-gray-100 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{org.displayName || org.Name}</h3>
+                        <h3 className="font-semibold text-md text-gray-800 mb-1 group-hover:text-blue-600 transition-colors">{org.displayName || org.Name}</h3>
                         
                         {org.Summary && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">{org.Summary}</p>
+                          <p className="text-sm text-gray-500 mb-3 line-clamp-2">{org.Summary}</p>
                         )}
 
                         {/* Display tags from the new system with tooltips */}
@@ -562,7 +571,7 @@ const OrganizationsPage: React.FC = () => {
                                 key={tag}
                                 content={categoryDescriptions[tag] || tag}
                               >
-                                <span className="inline-block bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2 py-0.5 rounded flex items-center gap-1">
+                                <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded flex items-center gap-1">
                                   {tag}
                                   {categoryDescriptions[tag] && (
                                     <Info className="w-3 h-3 opacity-60" />
@@ -577,7 +586,7 @@ const OrganizationsPage: React.FC = () => {
                           href={`https://njit.campuslabs.com/engage/organization/${org.WebsiteKey}`} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="mt-auto text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                          className="mt-auto text-sm text-blue-600 hover:underline"
                         >
                           View on Engage →
                         </a>
@@ -585,11 +594,11 @@ const OrganizationsPage: React.FC = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                  <div className="divide-y divide-gray-200">
                     {filteredOrganizations.map((org) => (
                       <div 
                         key={org.Id || org.WebsiteKey}
-                        className="p-4 flex items-center hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                        className="p-4 flex items-center hover:bg-gray-50 transition-colors"
                       >
                         <img 
                           src={`/api/organizationAvatar?name=${encodeURIComponent(org.Name)}&size=80`}
@@ -598,10 +607,10 @@ const OrganizationsPage: React.FC = () => {
                         />
                         
                         <div className="flex-grow min-w-0">
-                          <h3 className="font-semibold text-md text-gray-800 dark:text-gray-100 mb-1">{org.displayName || org.Name}</h3>
+                          <h3 className="font-semibold text-md text-gray-800 mb-1">{org.displayName || org.Name}</h3>
                           
                           {org.Summary && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 line-clamp-1">{org.Summary}</p>
+                            <p className="text-sm text-gray-500 mb-2 line-clamp-1">{org.Summary}</p>
                           )}
 
                           {/* Display tags from the new system in list view with tooltips */}
@@ -612,7 +621,7 @@ const OrganizationsPage: React.FC = () => {
                                   key={tag}
                                   content={categoryDescriptions[tag] || tag}
                                 >
-                                  <span className="inline-block bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs px-2 py-0.5 rounded flex items-center gap-1">
+                                  <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded flex items-center gap-1">
                                     {tag}
                                     {categoryDescriptions[tag] && (
                                       <Info className="w-3 h-3 opacity-60" />
@@ -628,7 +637,7 @@ const OrganizationsPage: React.FC = () => {
                           href={`https://njit.campuslabs.com/engage/organization/${org.WebsiteKey}`} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-sm text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap ml-4"
+                          className="text-sm text-blue-600 hover:underline whitespace-nowrap ml-4"
                         >
                           View on Engage →
                         </a>
@@ -654,7 +663,7 @@ const OrganizationsPage: React.FC = () => {
             
             {/* Count of organizations */}
             {!isLoading && !error && filteredOrganizations.length > 0 && (
-              <div className="py-4 text-sm text-gray-500 text-center border-t border-gray-200 dark:border-gray-700">
+              <div className="py-4 text-sm text-gray-500 text-center border-t border-gray-200">
                 Showing {filteredOrganizations.length} of {
                   searchTerm || selectedCategories.length > 0 
                     ? allOrganizations.filter(org => {
@@ -675,7 +684,7 @@ const OrganizationsPage: React.FC = () => {
           
           {/* Back Link */}
           <div className="mt-8 text-center">
-            <Link href="/" className="text-blue-600 dark:text-blue-400 hover:underline">
+            <Link href="/" className="text-blue-600 hover:underline">
               ← Back to Home
             </Link>
           </div>

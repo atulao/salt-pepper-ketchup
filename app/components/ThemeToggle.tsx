@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
+import { applyTheme } from '../utils/theme-utils';
 
 interface ThemeToggleProps {
   className?: string;
@@ -21,45 +22,39 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
   // Wait for component to mount before accessing localStorage
   useEffect(() => {
     setMounted(true);
+    console.log("--- Debug ThemeToggle: Mounted");
     
     // Get saved preference from localStorage
     const savedMode = localStorage.getItem('uiMode');
     const initialDarkMode = savedMode === 'dark';
+    console.log(`--- Debug ThemeToggle: Initial localStorage mode: ${savedMode}, setting isDarkMode: ${initialDarkMode}`);
     setIsDarkMode(initialDarkMode);
     
     // Apply theme classes only after mounting (client-side)
-    if (initialDarkMode) {
-      document.documentElement.classList.add('dark');
-      document.body.classList.add('dark-mode');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.body.classList.remove('dark-mode');
-    }
+    applyTheme(initialDarkMode);
+
   }, []);
   
   // Separate useEffect for the callback to avoid state updates during render
   useEffect(() => {
     if (mounted && onModeChange) {
+      console.log(`--- Debug ThemeToggle: Calling onModeChange with isDarkMode: ${isDarkMode}`);
       onModeChange(isDarkMode);
     }
   }, [isDarkMode, onModeChange, mounted]);
 
   // Toggle mode function
   const toggleMode = () => {
+    console.log("--- Debug ThemeToggle: toggleMode called");
     setIsDarkMode(prev => {
       const newMode = !prev;
+      console.log(`--- Debug ThemeToggle: Toggling mode. New isDarkMode: ${newMode}`);
       
       // Save preference
       localStorage.setItem('uiMode', newMode ? 'dark' : 'light');
       
-      // Apply the dark mode class to both html and body for compatibility
-      if (newMode) {
-        document.documentElement.classList.add('dark');
-        document.body.classList.add('dark-mode');
-      } else {
-        document.documentElement.classList.remove('dark');
-        document.body.classList.remove('dark-mode');
-      }
+      // Apply the dark mode class using helper function
+      applyTheme(newMode);
       
       return newMode;
     });
