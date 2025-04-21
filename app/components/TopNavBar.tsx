@@ -28,7 +28,7 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ onModeChange }) => {
 
   return (
     <div className={`w-full border-b sticky top-0 z-50 transition-colors duration-300 ${
-      isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200 shadow-sm'
+      isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-gray-50 border-gray-200'
     }`}>
       <div className="max-w-6xl mx-auto px-4 py-1">
         <div className="flex items-center justify-between">
