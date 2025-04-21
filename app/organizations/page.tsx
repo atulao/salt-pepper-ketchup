@@ -89,7 +89,9 @@ const OrganizationsPage: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('/api/organizationCategories');
+        // Add a timestamp to bust the cache
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/organizationCategories?t=${timestamp}`);
         if (!response.ok) {
           throw new Error(`HTTP Error: ${response.status}`);
         }
@@ -166,22 +168,39 @@ const OrganizationsPage: React.FC = () => {
   useEffect(() => {
     if (allOrganizations.length === 0) return;
 
-    const filtered = allOrganizations.filter(org => {
-      // Filter by search term
-      const matchesSearch = searchTerm === '' || 
+    // First, create a list of all orgs that match the search term
+    let searchMatched = allOrganizations.filter(org => {
+      return searchTerm === '' || 
         org.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (org.Summary && org.Summary.toLowerCase().includes(searchTerm.toLowerCase()));
-      
-      // Filter by selected categories using the new tag system
-      const matchesCategories = selectedCategories.length === 0 || 
-        (org.tags && org.tags.some(tag => selectedCategories.includes(tag)));
-      
-      return matchesSearch && matchesCategories;
     });
+    
+    // Next, filter by selected categories
+    let categoryMatched = searchMatched;
+    if (selectedCategories.length > 0) {
+      categoryMatched = searchMatched.filter(org => {
+        return org.tags && org.tags.some(tag => selectedCategories.includes(tag));
+      });
+      
+      // Log for debugging women-led organizations
+      if (selectedCategories.includes('Women-led')) {
+        const womenLedOrgs = allOrganizations.filter(org => 
+          org.tags && org.tags.includes('Women-led')
+        );
+        console.log(`Total Women-led organizations: ${womenLedOrgs.length}`);
+        console.log('Women-led organizations:', womenLedOrgs.map(org => org.Name));
+        
+        const filteredWomenLed = categoryMatched.filter(org => 
+          org.tags && org.tags.includes('Women-led')
+        );
+        console.log(`Filtered Women-led organizations: ${filteredWomenLed.length}`);
+        console.log('Filtered Women-led:', filteredWomenLed.map(org => org.Name));
+      }
+    }
 
     // Update filtered organizations and pagination state
-    setFilteredOrganizations(filtered.slice(0, currentPage * PAGE_SIZE));
-    setHasMore(filtered.length > currentPage * PAGE_SIZE);
+    setFilteredOrganizations(categoryMatched.slice(0, currentPage * PAGE_SIZE));
+    setHasMore(categoryMatched.length > currentPage * PAGE_SIZE);
   }, [searchTerm, selectedCategories, allOrganizations, currentPage]);
 
   // Function to load more organizations
@@ -258,6 +277,34 @@ const OrganizationsPage: React.FC = () => {
                 <p className="text-gray-600 dark:text-gray-400">Student clubs and groups at NJIT</p>
               </div>
             </div>
+            
+            {/* Debug button - only visible in development */}
+            {process.env.NODE_ENV === 'development' && (
+              <button
+                onClick={() => {
+                  // Find and log all women-led organizations
+                  const womenLedOrgs = allOrganizations.filter(org => 
+                    org.tags && org.tags.includes('Women-led')
+                  );
+                  console.log(`Total Women-led organizations: ${womenLedOrgs.length}`);
+                  console.table(womenLedOrgs.map(org => ({
+                    Name: org.Name,
+                    Tags: org.tags?.join(', ')
+                  })));
+                  
+                  // Count by primary category
+                  const categoryCounts: Record<string, number> = {};
+                  womenLedOrgs.forEach(org => {
+                    const primaryCategory = org.tags?.[0] || 'Unknown';
+                    categoryCounts[primaryCategory] = (categoryCounts[primaryCategory] || 0) + 1;
+                  });
+                  console.log('Women-led orgs by primary category:', categoryCounts);
+                }}
+                className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+              >
+                Debug Women-led
+              </button>
+            )}
           </div>
           
           {/* Search and Filters */}
