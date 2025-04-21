@@ -206,7 +206,7 @@ const organizationCategories = [
   {"name":"Kids Who Code","tags":["Service & Philanthropy","Hobbies & Leisure"]},
   {"name":"Knit N' Crochet Club","tags":["Hobbies & Leisure","Service & Philanthropy"]},
   {"name":"NJIT Amateur Radio Club","tags":["Hobbies & Leisure"]},
-  {"name":"NJIT Anime Club","tags":["Hobbies & Leisure"]},
+  {"name":"Anime Club","tags":["Hobbies & Leisure"]},
   {"name":"Philosophy Club","tags":["Academic & Scholastic","Hobbies & Leisure"]},
   {"name":"The Munch Madness Club","tags":["Hobbies & Leisure"]},
   
@@ -339,6 +339,18 @@ const allCategories = [
 ];
 
 export async function GET() {
+  // Add debugging logging to track category filtering issues
+  console.log("--- Debugging: organizationCategories API called");
+  console.log("--- Debugging: Total organization mappings:", organizationCategories.length);
+  
+  // Log organizations still tagged as "Other / Needs Review"
+  const orgsWithOtherTag = organizationCategories.filter(org => 
+    org.tags.includes("Other / Needs Review")
+  );
+  console.log("--- Debugging: Organizations still tagged as 'Other / Needs Review':", 
+    orgsWithOtherTag.map(org => org.name)
+  );
+  
   return NextResponse.json({
     categories: allCategories,
     organizationCategories: organizationCategories,

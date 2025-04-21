@@ -10,12 +10,13 @@ import '../styles/organizationAvatar.css'; // Import the avatar styles
 // Define a type for the organization data from the API
 interface Organization {
   Id: string; // Assuming an ID field exists, often useful as key
-  Name: string;
+  Name: string; // Original name from API
   WebsiteKey: string; // Used to build the link to the org's page
   ProfilePicture?: string; // Optional profile picture URL
   Summary?: string; // Optional short description
   CategoryNames?: string[]; // Optional categories
   tags?: string[]; // Added for the new tagging system
+  displayName?: string; // Added for the canonical/display name
 }
 
 // Interface for the organization category mapping
@@ -65,6 +66,27 @@ const Tooltip: React.FC<{
   );
 };
 
+// *** Add helper function here ***
+const normalizeOrgName = (name: string): string => {
+  if (!name) return ''; // Handle null or undefined names
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')                   // Replace multiple spaces with single space
+    .replace(/\(.*?\)/g, '')                // Remove parentheses and their contents (non-greedy)
+    .replace(/&/g, 'and')                  // Replace & with "and"
+    .trim();                                 // Trim again after replacements
+};
+// *** End helper function ***
+
+// *** Add special mappings here ***
+const SPECIAL_MAPPINGS: { [key: string]: string } = {
+  // "Anime Club": "NJIT Anime Club", // Ensure this line is removed or commented out
+  "NJIT ID Card Photo Submission - For Fall 2023 incoming students only": "NJIT ID Card Photo Submission",
+  "The Murray Center for Women in Technology": "Murray Center for Women in Technology" 
+};
+// *** End special mappings ***
+
 const OrganizationsPage: React.FC = () => {
   // State management
   const [isLoading, setIsLoading] = useState(true);
@@ -112,7 +134,9 @@ const OrganizationsPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch('/api/organizations');
+        // Add timestamp to bust cache
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/organizations?t=${timestamp}`);
 
         if (!response.ok) {
           let errorData = { message: `HTTP Error: ${response.status} ${response.statusText}` };
@@ -127,15 +151,99 @@ const OrganizationsPage: React.FC = () => {
         const data = await response.json();
 
         if (Array.isArray(data)) {
+          console.log('Category mappings available:', categoryMappings.length > 0 ? 'Yes' : 'No', categoryMappings.length);
+          
+          // *** Start Enhanced Debugging ***
+          console.log("--- Debugging: Starting organization tag mapping for", data.length, "organizations");
+          
           // Add tags from the category mappings to each organization
           const orgsWithTags = data.map(org => {
-            const mapping = categoryMappings.find(m => m.name === org.Name);
+            
+            let mapping: OrgCategoryMapping | undefined;
+            let displayName: string = org.Name; // Default display name to original
+
+            // --- Start Robust Matching Logic ---
+            // 0. Check for special case mappings first
+            const specialCaseTargetName = SPECIAL_MAPPINGS[org.Name];
+            if (specialCaseTargetName) {
+              mapping = categoryMappings.find(m => m.name === specialCaseTargetName);
+              if (mapping) {
+                 displayName = mapping.name; // Use the canonical name from mapping
+              }
+            }
+
+            // 1. If no special mapping, try exact match 
+            if (!mapping) {
+              mapping = categoryMappings.find(m => m.name === org.Name);
+              if (mapping) {
+                 displayName = mapping.name; // Use the canonical name from mapping
+              }
+            }
+            
+            // 2. If no exact match, try normalized match
+            if (!mapping && org.Name) { 
+              const normalizedOrgName = normalizeOrgName(org.Name);
+              if (normalizedOrgName) { 
+                 mapping = categoryMappings.find(m => normalizeOrgName(m.name) === normalizedOrgName);
+                 if (mapping) {
+                    displayName = mapping.name; // Use the canonical name from mapping
+                 }
+              }
+            }
+            // --- End Robust Matching Logic ---
+            
+            // Add additional logging specifically for the 3 problem orgs if they STILL fail
+            if (!mapping && (
+              org.Name === "Anime Club" || 
+              org.Name === "NJIT ID Card Photo Submission - For Fall 2023 incoming students only" ||
+              org.Name === "The Murray Center for Women in Technology"
+            )) {
+              console.log(`--- Debugging: Still NO MATCH for "${org.Name}" after special & normalized checks.`);
+              const normalizedOrgName = normalizeOrgName(org.Name);
+              console.log(`    Normalized name: "${normalizedOrgName}"`);
+              
+              // Find potential matches based on normalized similarity (basic check)
+              const potentialMatches = categoryMappings
+                .map(m => ({
+                  name: m.name,
+                  normalized: normalizeOrgName(m.name),
+                  similarity: 0 // Placeholder for basic similarity
+                }))
+                .map(m => {
+                  const similarity = [...m.normalized].filter(c => normalizedOrgName.includes(c)).length / 
+                                   Math.max(m.normalized.length, normalizedOrgName.length, 1); // Avoid div by zero
+                  m.similarity = similarity;
+                  return m;
+                })
+                .filter(m => m.similarity > 0.6) // Show only >60% overlap
+                .sort((a, b) => b.similarity - a.similarity)
+                .slice(0, 5); // Limit to top 5
+              
+              console.log(`    Potential close normalized matches in mappings:`, potentialMatches.map(p => `"${p.name}" (Similarity: ${p.similarity.toFixed(2)})`));
+            } else if (!mapping && org.Name) {
+               // Standard log for any other unexpected failure
+               console.log(`--- Debugging: NO MATCH FOUND for "${org.Name}" after all checks - assigning 'Other / Needs Review'`);
+            }
+
             return {
-              ...org,
+              ...org, // Keep original org data (like Id, WebsiteKey, ProfilePicture, Summary, and original Name)
+              displayName: displayName, // Add the name we want to display and search
               tags: mapping ? mapping.tags : ["Other / Needs Review"]
             };
           });
-          
+
+          // Cleaned up logging: Only show final list of failures
+          const untaggedOrgs = orgsWithTags.filter(org => 
+             org.tags && org.tags.includes("Other / Needs Review")
+          );
+          console.log(`--- Debugging: Final count of organizations with 'Other / Needs Review' tag: ${untaggedOrgs.length}`);
+          if (untaggedOrgs.length > 0) {
+              console.log("--- Debugging: Final list of orgs with 'Other / Needs Review':", 
+                untaggedOrgs.map(org => `"${org.Name}"`)
+              );
+          }
+          // Remove the previous problematic org check section as it's now less relevant
+
           setAllOrganizations(orgsWithTags);
           setOrganizations(orgsWithTags.slice(0, PAGE_SIZE));
           setFilteredOrganizations(orgsWithTags.slice(0, PAGE_SIZE));
@@ -159,7 +267,13 @@ const OrganizationsPage: React.FC = () => {
       }
     };
 
+    // This depends on categoryMappings being populated
     if (categoryMappings.length > 0) {
+      // *** Add logging here ***
+      console.log("--- Debugging: Category mappings loaded:", categoryMappings.length, "total");
+      // Optional: Log all names if needed (can be very long)
+      // console.log("--- Debugging: Mapping names:", categoryMappings.map(m => m.name));
+      // *** End logging ***
       fetchOrganizations();
     }
   }, [categoryMappings]);
@@ -168,11 +282,30 @@ const OrganizationsPage: React.FC = () => {
   useEffect(() => {
     if (allOrganizations.length === 0) return;
 
+    // If "Other / Needs Review" is selected, log detailed information
+    if (selectedCategories.includes("Other / Needs Review")) {
+      console.log("--- Debugging: Filtering useEffect triggered with 'Other / Needs Review' selected");
+      const orgsWithOtherTag = allOrganizations.filter(org => 
+        org.tags && org.tags.includes("Other / Needs Review")
+      );
+      console.log("--- Debugging: Orgs in allOrganizations with 'Other / Needs Review' tag:", orgsWithOtherTag.map(org => org.Name));
+      
+      // Optional: Log details for each org with the tag
+      // orgsWithOtherTag.forEach(org => {
+      //   console.log(`--- Debugging: ${org.Name} has tag "Other / Needs Review":`, org.tags);
+      // });
+    }
+
     // First, create a list of all orgs that match the search term
     let searchMatched = allOrganizations.filter(org => {
-      return searchTerm === '' || 
-        org.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (org.Summary && org.Summary.toLowerCase().includes(searchTerm.toLowerCase()));
+      // *** Update Search Logic ***
+      const searchTermLower = searchTerm.toLowerCase();
+      const originalNameMatch = org.Name?.toLowerCase().includes(searchTermLower);
+      const displayNameMatch = org.displayName?.toLowerCase().includes(searchTermLower); // Check displayName too
+      const summaryMatch = org.Summary?.toLowerCase().includes(searchTermLower);
+      
+      return searchTerm === '' || originalNameMatch || displayNameMatch || summaryMatch;
+      // *** End Update ***
     });
     
     // Next, filter by selected categories
@@ -245,6 +378,18 @@ const OrganizationsPage: React.FC = () => {
 
   // Toggle category selection
   const toggleCategory = (category: string) => {
+    console.log(`--- Debugging: Category "${category}" toggled`);
+    
+    // If selecting "Other / Needs Review", print all organizations with this tag
+    if (category === "Other / Needs Review" && !selectedCategories.includes(category)) {
+      const orgsWithOtherTag = allOrganizations.filter(org => 
+        org.tags && org.tags.includes("Other / Needs Review")
+      );
+      console.log("--- Debugging: Organizations currently tagged as 'Other / Needs Review' in state:", 
+        orgsWithOtherTag.map(org => org.Name)
+      );
+    }
+
     setSelectedCategories(prev => 
       prev.includes(category) 
         ? prev.filter(c => c !== category) 
@@ -277,34 +422,6 @@ const OrganizationsPage: React.FC = () => {
                 <p className="text-gray-600 dark:text-gray-400">Student clubs and groups at NJIT</p>
               </div>
             </div>
-            
-            {/* Debug button - only visible in development */}
-            {process.env.NODE_ENV === 'development' && (
-              <button
-                onClick={() => {
-                  // Find and log all women-led organizations
-                  const womenLedOrgs = allOrganizations.filter(org => 
-                    org.tags && org.tags.includes('Women-led')
-                  );
-                  console.log(`Total Women-led organizations: ${womenLedOrgs.length}`);
-                  console.table(womenLedOrgs.map(org => ({
-                    Name: org.Name,
-                    Tags: org.tags?.join(', ')
-                  })));
-                  
-                  // Count by primary category
-                  const categoryCounts: Record<string, number> = {};
-                  womenLedOrgs.forEach(org => {
-                    const primaryCategory = org.tags?.[0] || 'Unknown';
-                    categoryCounts[primaryCategory] = (categoryCounts[primaryCategory] || 0) + 1;
-                  });
-                  console.log('Women-led orgs by primary category:', categoryCounts);
-                }}
-                className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-              >
-                Debug Women-led
-              </button>
-            )}
           </div>
           
           {/* Search and Filters */}
@@ -361,27 +478,34 @@ const OrganizationsPage: React.FC = () => {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {/* Show all categories with tooltips */}
-                  {availableCategories.map(category => (
-                    <Tooltip 
-                      key={category}
-                      content={categoryDescriptions[category] || category}
-                    >
-                      <button
-                        onClick={() => toggleCategory(category)}
-                        className={`text-xs px-3 py-1 rounded-full transition-colors flex items-center gap-1 ${
-                          selectedCategories.includes(category)
-                            ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
-                        }`}
+                  {/* Show all categories with tooltips, hiding 'Other / Needs Review' */}
+                  {availableCategories.map(category => {
+                    // Don't render the filter button for "Other / Needs Review"
+                    if (category === "Other / Needs Review") {
+                      return null; 
+                    }
+                    
+                    return (
+                      <Tooltip 
+                        key={category}
+                        content={categoryDescriptions[category] || category}
                       >
-                        {category}
-                        {categoryDescriptions[category] && (
-                          <Info className="w-3 h-3 opacity-60" />
-                        )}
-                      </button>
-                    </Tooltip>
-                  ))}
+                        <button
+                          onClick={() => toggleCategory(category)}
+                          className={`text-xs px-3 py-1 rounded-full transition-colors flex items-center gap-1 ${
+                            selectedCategories.includes(category)
+                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700'
+                              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
+                          }`}
+                        >
+                          {category}
+                          {categoryDescriptions[category] && (
+                            <Info className="w-3 h-3 opacity-60" />
+                          )}
+                        </button>
+                      </Tooltip>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -420,11 +544,11 @@ const OrganizationsPage: React.FC = () => {
                       >
                         <img 
                           src={`/api/organizationAvatar?name=${encodeURIComponent(org.Name)}&size=100`}
-                          alt={`${org.Name} avatar`}
+                          alt={`${org.displayName || org.Name} avatar`}
                           className="organization-avatar mb-3"
                         />
 
-                        <h3 className="font-semibold text-md text-gray-800 dark:text-gray-100 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{org.Name}</h3>
+                        <h3 className="font-semibold text-md text-gray-800 dark:text-gray-100 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{org.displayName || org.Name}</h3>
                         
                         {org.Summary && (
                           <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">{org.Summary}</p>
@@ -469,12 +593,12 @@ const OrganizationsPage: React.FC = () => {
                       >
                         <img 
                           src={`/api/organizationAvatar?name=${encodeURIComponent(org.Name)}&size=80`}
-                          alt={`${org.Name} avatar`}
+                          alt={`${org.displayName || org.Name} avatar`}
                           className="organization-avatar w-16 h-16 mr-4"
                         />
                         
                         <div className="flex-grow min-w-0">
-                          <h3 className="font-semibold text-md text-gray-800 dark:text-gray-100 mb-1">{org.Name}</h3>
+                          <h3 className="font-semibold text-md text-gray-800 dark:text-gray-100 mb-1">{org.displayName || org.Name}</h3>
                           
                           {org.Summary && (
                             <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 line-clamp-1">{org.Summary}</p>

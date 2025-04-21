@@ -112,7 +112,13 @@ export async function GET(request: Request) {
     });
     
     console.log(`Returning ${orgsWithFixedImages.length} total organizations`);
-    return NextResponse.json(orgsWithFixedImages);
+    return NextResponse.json(orgsWithFixedImages, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }
+    });
     
   } catch (error) {
     console.error('Error in organizations proxy route:', error);
