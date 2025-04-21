@@ -313,12 +313,24 @@ const OrganizationsPage: React.FC = () => {
     });
     
     // Next, filter by selected categories
-    let categoryMatched = searchMatched;
+    let finalFilteredOrgs = searchMatched; // Start with search results
+
     if (selectedCategories.length > 0) {
-      categoryMatched = searchMatched.filter(org => {
+      finalFilteredOrgs = searchMatched.filter(org => {
         return org.tags && org.tags.some(tag => selectedCategories.includes(tag));
       });
-      
+
+      // *** Add Sorting Logic Here ***
+      // Sort alphabetically by displayName (fallback to Name) only if categories are selected
+      finalFilteredOrgs.sort((a, b) => {
+        const nameA = (a.displayName || a.Name || '').toLowerCase();
+        const nameB = (b.displayName || b.Name || '').toLowerCase();
+        if (nameA < nameB) return -1;
+        if (nameA > nameB) return 1;
+        return 0;
+      });
+      // *** End Sorting Logic ***
+
       // Log for debugging women-led organizations
       if (selectedCategories.includes('Women-led')) {
         const womenLedOrgs = allOrganizations.filter(org => 
@@ -327,17 +339,18 @@ const OrganizationsPage: React.FC = () => {
         console.log(`Total Women-led organizations: ${womenLedOrgs.length}`);
         console.log('Women-led organizations:', womenLedOrgs.map(org => org.Name));
         
-        const filteredWomenLed = categoryMatched.filter(org => 
+        const filteredWomenLed = finalFilteredOrgs.filter(org => 
           org.tags && org.tags.includes('Women-led')
         );
         console.log(`Filtered Women-led organizations: ${filteredWomenLed.length}`);
         console.log('Filtered Women-led:', filteredWomenLed.map(org => org.Name));
       }
     }
+    // If no categories are selected, finalFilteredOrgs remains the searchMatched result (unsorted by name unless search itself implies order)
 
-    // Update filtered organizations and pagination state
-    setFilteredOrganizations(categoryMatched.slice(0, currentPage * PAGE_SIZE));
-    setHasMore(categoryMatched.length > currentPage * PAGE_SIZE);
+    // Update filtered organizations and pagination state using the potentially sorted list
+    setFilteredOrganizations(finalFilteredOrgs.slice(0, currentPage * PAGE_SIZE));
+    setHasMore(finalFilteredOrgs.length > currentPage * PAGE_SIZE);
   }, [searchTerm, selectedCategories, allOrganizations, currentPage]);
 
   // Function to load more organizations
@@ -352,17 +365,30 @@ const OrganizationsPage: React.FC = () => {
         const end = nextPage * PAGE_SIZE;
         
         // Update the filtered organizations based on current filters
-        const filtered = allOrganizations.filter(org => {
-          const matchesSearch = searchTerm === '' || 
-            org.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        let filtered = allOrganizations.filter(org => {
+          const matchesSearch = searchTerm === '' ||
+            // Match against both display and original name
+            org.Name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            org.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
             (org.Summary && org.Summary.toLowerCase().includes(searchTerm.toLowerCase()));
-          
-          const matchesCategories = selectedCategories.length === 0 || 
+
+          const matchesCategories = selectedCategories.length === 0 ||
             (org.tags && org.tags.some(tag => selectedCategories.includes(tag)));
-          
+
           return matchesSearch && matchesCategories;
         });
-        
+
+        // Apply sorting if categories are selected when loading more too
+        if (selectedCategories.length > 0) {
+           filtered.sort((a, b) => {
+             const nameA = (a.displayName || a.Name || '').toLowerCase();
+             const nameB = (b.displayName || b.Name || '').toLowerCase();
+             if (nameA < nameB) return -1;
+             if (nameA > nameB) return 1;
+             return 0;
+           });
+        }
+
         setFilteredOrganizations(filtered.slice(0, end));
         setCurrentPage(nextPage);
         setHasMore(filtered.length > end);
@@ -665,15 +691,18 @@ const OrganizationsPage: React.FC = () => {
             {!isLoading && !error && filteredOrganizations.length > 0 && (
               <div className="py-4 text-sm text-gray-500 text-center border-t border-gray-200">
                 Showing {filteredOrganizations.length} of {
-                  searchTerm || selectedCategories.length > 0 
+                  searchTerm || selectedCategories.length > 0
                     ? allOrganizations.filter(org => {
-                        const matchesSearch = searchTerm === '' || 
-                          org.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (org.Summary && org.Summary.toLowerCase().includes(searchTerm.toLowerCase()));
-                        
-                        const matchesCategories = selectedCategories.length === 0 || 
+                        // Use consistent filtering logic as in useEffect and loadMore
+                        const searchTermLower = searchTerm.toLowerCase();
+                        const matchesSearch = searchTerm === '' ||
+                          org.Name?.toLowerCase().includes(searchTermLower) ||
+                          org.displayName?.toLowerCase().includes(searchTermLower) || 
+                          (org.Summary && org.Summary.toLowerCase().includes(searchTermLower));
+
+                        const matchesCategories = selectedCategories.length === 0 ||
                           (org.tags && org.tags.some(tag => selectedCategories.includes(tag)));
-                        
+
                         return matchesSearch && matchesCategories;
                       }).length
                     : allOrganizations.length
