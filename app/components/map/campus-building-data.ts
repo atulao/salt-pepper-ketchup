@@ -121,6 +121,51 @@ export const ROOM_TO_BUILDING_MAP: {[key: string]: string} = {
     "Lecture Hall": "Central King Building"
 };
 
+// Use building names exactly as they appear in the filtered list in BuildingsDirectory.tsx
+// You will need to manually find and fill in the optimal heading/pitch for each building.
+// Add fov values as needed (default is 100 in BuildingsDirectory.tsx)
+export const BUILDING_VIEW_ANGLES: { [key: string]: { heading: number, pitch: number, fov?: number } } = {
+    "Guttenberg Information Technologies Center": { heading: 180, pitch: 5 }, // Example: Facing South, slightly up
+    "Campus Center": { heading: 90, pitch: 0 },         // Example: Facing East, level
+    "Kupfrian Hall": { heading: 115, pitch: 0, fov: 50 },        // Updated example
+    "Wellness and Events Center": { heading: 315, pitch: 0 }, // Example: Facing Northwest, level
+    "Central King Building": { heading: 180, pitch: 0 },
+    "Colton Hall": { heading: 200, pitch: 5 },
+    "Cullimore Hall": { heading: 270, pitch: 0 },
+    "Cypress Residence Hall": { heading: 0, pitch: 0 },
+    "Eberhardt Hall": { heading: 90, pitch: 5 },
+    "Electrical and Computer Engineering Center": { heading: 180, pitch: 0 },
+    "Enterprise Development Center": { heading: 45, pitch: 0 },
+    "Facilities Services Building": { heading: 270, pitch: 0 },
+    "Faculty Memorial Hall": { heading: 180, pitch: 0 },
+    "Fenster Hall": { heading: 0, pitch: 5 },
+    "Greek Residence Building 17-19": { heading: 180, pitch: 0 }, // Example value
+    "Laurel Residence Hall": { heading: 295, pitch: 30, fov: 100 },
+    "Laurel Residence Hall Extension": { heading: 270, pitch: 0 },
+    "Life Sciences and Engineering Center": { heading: 90, pitch: 0 },
+    "Maple Hall": { heading: 0, pitch: 0 },
+    "Maple Hall Building": { heading: 0, pitch: 0 },
+    "Martinson Honors Residence Hall": { heading: 90, pitch: 0 },
+    "Mechanical Engineering Center": { heading: 0, pitch: 0 },
+    "Naimoli Family Athletic Center": { heading: 270, pitch: 0 },
+    "Oak Residence Hall": { heading: 0, pitch: 0 },
+    "Redwood Residence Hall": { heading: 180, pitch: 0 },
+    "Tiernan Hall": { heading: 90, pitch: 0 },
+    "Weston Hall": { heading: 0, pitch: 0 },
+    "Athletic Field": { heading: 90, pitch: 0 },
+    "Campbell Hall": { heading: 0, pitch: 0 }, // Example value
+    "Council for Higher Education in Newark Building": { heading: 0, pitch: 0 }, // Example value
+    "Greek Residence Building 05-07": { heading: 0, pitch: 0 }, // Example value
+    "Greek Residence Building 09-11": { heading: 0, pitch: 0 }, // Example value
+    "Greek Residence Building 13-15": { heading: 0, pitch: 0 }, // Example value
+    "Greek Residence Building 21-23": { heading: 0, pitch: 0 }, // Example value
+    "Green at University Park": { heading: 0, pitch: 0 }, // Example value
+    "Microelectronics Center": { heading: 0, pitch: 0 }, // Example value
+    "Specht Building": { heading: 0, pitch: 0 }, // Example value
+    "York Center": { heading: 0, pitch: 0 }, // Example value
+    // Add any other specific buildings shown in the directory that are missing
+};
+
 /**
  * Normalizes a building name by checking against aliases and applying
  * standardization rules

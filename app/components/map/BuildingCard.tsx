@@ -1,57 +1,33 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
-import { Map, Navigation } from 'lucide-react';
+import React from 'react';
+import { Navigation } from 'lucide-react';
 import { 
-  CAMPUS_BUILDING_COORDINATES, 
   BUILDING_NAME_ALIASES,
   getDirectionsUrl
 } from './campus-building-data';
-import { MAPBOX_API_KEY } from '../../config/api-keys';
 
 interface BuildingCardProps {
   buildingName: string;
+  streetViewImageUrl: string;
 }
 
-const BuildingCard: React.FC<BuildingCardProps> = ({ buildingName }) => {
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  
+const BuildingCard: React.FC<BuildingCardProps> = ({ buildingName, streetViewImageUrl }) => {
   // Find aliases for this building
   const aliases = Object.entries(BUILDING_NAME_ALIASES)
     .filter(([alias, fullName]) => fullName === buildingName)
     .map(([alias]) => alias);
-  
-  // Get coordinates
-  const coordinates = CAMPUS_BUILDING_COORDINATES[buildingName] || [40.7424259, -74.1784006];
-
-  // Set up the map
-  useEffect(() => {
-    const mapContainer = mapContainerRef.current;
-    if (!mapContainer) return;
-    
-    // Create MapBox static map URL
-    const mapboxUrl = `https://api.mapbox.com/styles/v1/mapbox/streets-v11/static/pin-s+2563eb(${coordinates[1]},${coordinates[0]})/${coordinates[1]},${coordinates[0]},15,0/600x300@2x?access_token=${MAPBOX_API_KEY}`;
-    
-    // Set the map as background image
-    mapContainer.style.backgroundImage = `url('${mapboxUrl}')`;
-    mapContainer.style.backgroundSize = 'cover';
-    mapContainer.style.backgroundPosition = 'center';
-  }, [coordinates]);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow h-full flex flex-col">
-      {/* Map Preview */}
-      <div 
-        ref={mapContainerRef} 
-        className="h-36 bg-gray-200 relative"
-        aria-label={`Map of ${buildingName}`}
-      >
-        <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
-          <span className="bg-white bg-opacity-90 px-3 py-1 rounded-full text-sm font-medium flex items-center">
-            <Map className="h-3 w-3 mr-1.5" />
-            Map View
-          </span>
-        </div>
+      {/* Street View Image */}
+      <div className="h-48 w-full overflow-hidden">
+        <img 
+          src={streetViewImageUrl} 
+          alt={`Street View of ${buildingName}`}
+          className="w-full h-full object-cover"
+          onError={(e) => (e.currentTarget.src = '/placeholder-image.png')}
+        />
       </div>
       
       {/* Building Info */}

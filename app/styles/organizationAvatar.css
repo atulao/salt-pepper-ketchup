@@ -1,0 +1,12 @@
+.organization-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.organization-avatar:hover {
+  transform: scale(1.05);
+} 

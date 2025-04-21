@@ -4,7 +4,9 @@ import React, { useState, useMemo } from 'react';
 import { 
   CAMPUS_BUILDING_COORDINATES, 
   BUILDING_NAME_ALIASES, 
-  normalizeBuildingName
+  normalizeBuildingName,
+  getBuildingCoordinates,
+  BUILDING_VIEW_ANGLES
 } from './campus-building-data';
 import BuildingCard from './BuildingCard';
 import TopNavBar from '../TopNavBar';
@@ -174,7 +176,28 @@ const BuildingsDirectory: React.FC = () => {
           {/* Buildings Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredBuildings.map((building) => (
-              <BuildingCard key={building} buildingName={building} />
+              (() => {
+                // Get coordinates for the building
+                const coordinates = getBuildingCoordinates(building);
+                
+                // Get custom view angles or use defaults
+                const angles = BUILDING_VIEW_ANGLES[building] || { heading: 235, pitch: 10 }; // Default if not found
+                
+                // Determine FOV: use specific value or default (e.g., 100)
+                const fov = angles.fov || 100; 
+                
+                // Construct Google Street View URL
+                const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+                const streetViewImageUrl = `https://maps.googleapis.com/maps/api/streetview?size=600x300&location=${coordinates[0]},${coordinates[1]}&fov=${fov}&heading=${angles.heading}&pitch=${angles.pitch}&key=${apiKey}`; 
+                
+                return (
+                  <BuildingCard 
+                    key={building} 
+                    buildingName={building} 
+                    streetViewImageUrl={streetViewImageUrl} 
+                  />
+                );
+              })()
             ))}
           </div>
           

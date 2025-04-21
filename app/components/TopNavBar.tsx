@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Building, Map, Home } from 'lucide-react';
+import { Building, Map, Home, Users } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 interface TopNavBarProps {
@@ -60,7 +60,17 @@ const TopNavBar: React.FC<TopNavBarProps> = ({ onModeChange }) => {
               <span className="text-sm font-medium">Buildings</span>
             </Link>
             
-            {/* Add more navigation links here as needed */}
+            <Link 
+              href="/organizations" 
+              className={`flex items-center px-3 py-1.5 rounded-md transition-colors ${
+                isDarkMode 
+                  ? 'text-gray-300 hover:text-blue-400 hover:bg-gray-800' 
+                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-100'
+              }`}
+            >
+              <Users className="h-4 w-4 mr-2" />
+              <span className="text-sm font-medium">Organizations</span>
+            </Link>
             
             {/* Theme Toggle */}
             <ThemeToggle onModeChange={handleModeChange} className="ml-2" />

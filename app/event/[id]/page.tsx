@@ -4,6 +4,13 @@ import React, { useState, useEffect } from 'react';
 import EventDetailPage from '../../components/events/EventDetailPage';
 import { Event } from '../../types/event';
 
+// Define the expected props type for a dynamic route page
+type EventPageProps = {
+  params: { id: string };
+  // Optional: Include searchParams if you might use them
+  // searchParams?: { [key: string]: string | string[] | undefined };
+};
+
 // This would typically fetch data from your API
 async function getEvent(id: string): Promise<Event> {
   try {
@@ -48,7 +55,7 @@ async function getRelatedEvents(event: Event): Promise<Event[]> {
   }
 }
 
-export default function EventPage({ params }: { params: { id: string } }) {
+export default function EventPage({ params }: EventPageProps) {
   const [event, setEvent] = useState<Event | null>(null);
   const [relatedEvents, setRelatedEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
