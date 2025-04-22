@@ -3,10 +3,14 @@
 import React, { useEffect, useState, useRef } from 'react';
 import TopNavBar from '../components/TopNavBar';
 import Link from 'next/link';
-import { Users, Loader, Search, Filter, List, Grid, Info } from 'lucide-react'; // Add Info icon
+import { Users, Loader, Search, Filter, List, Grid, Info, ArrowRight } from 'lucide-react'; // Add Info icon and ArrowRight for tag text
 import Image from 'next/image'; // Import Image for profile pictures
 import '../styles/organizationAvatar.css'; // Import the avatar styles
 import { useDarkMode } from '../utils/theme-utils'; // Import the hook
+// Import the tag styles configuration
+import { getTagStyle } from '../config/organizationTagStyles';
+// Import the new component
+import ExpandableText from '../components/ExpandableText';
 
 // Define a type for the organization data from the API
 interface Organization {
@@ -248,6 +252,16 @@ const OrganizationsPage: React.FC = () => {
           }
           // Remove the previous problematic org check section as it's now less relevant
 
+          // *** Add Initial Alphabetical Sort Here ***
+          orgsWithTags.sort((a, b) => {
+            const nameA = (a.displayName || a.Name || '').toLowerCase();
+            const nameB = (b.displayName || b.Name || '').toLowerCase();
+            if (nameA < nameB) return -1;
+            if (nameA > nameB) return 1;
+            return 0;
+          });
+          // *** End Initial Sort ***
+
           setAllOrganizations(orgsWithTags);
           setOrganizations(orgsWithTags.slice(0, PAGE_SIZE));
           setFilteredOrganizations(orgsWithTags.slice(0, PAGE_SIZE));
@@ -255,7 +269,7 @@ const OrganizationsPage: React.FC = () => {
           setHasMore(orgsWithTags.length > PAGE_SIZE);
           setCurrentPage(1);
           
-          console.log(`Retrieved ${orgsWithTags.length} total organizations from API`);
+          console.log(`Retrieved and initially sorted ${orgsWithTags.length} total organizations from API`);
         } else {
           console.error("Proxy response was not an array:", data);
           throw new Error('Unexpected response format from proxy');
@@ -572,103 +586,139 @@ const OrganizationsPage: React.FC = () => {
               <>
                 {viewMode === 'grid' ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-gray-200">
-                    {filteredOrganizations.map((org) => (
-                      <div 
-                        key={org.Id || org.WebsiteKey}
-                        className="bg-white p-4 flex flex-col items-start group hover:bg-gray-50 transition-colors"
-                      >
-                        <img 
-                          src={`/api/organizationAvatar?name=${encodeURIComponent(org.Name)}&size=100`}
-                          alt={`${org.displayName || org.Name} avatar`}
-                          className="organization-avatar mb-3"
-                        />
-
-                        <h3 className="font-semibold text-md text-gray-800 mb-1 group-hover:text-blue-600 transition-colors">{org.displayName || org.Name}</h3>
-                        
-                        {org.Summary && (
-                          <p className="text-sm text-gray-500 mb-3 line-clamp-2">{org.Summary}</p>
-                        )}
-
-                        {/* Display tags from the new system with tooltips */}
-                        {org.tags && org.tags.length > 0 && (
-                          <div className="mb-3 flex flex-wrap gap-1">
-                            {org.tags.map(tag => (
-                              <Tooltip
-                                key={tag}
-                                content={categoryDescriptions[tag] || tag}
-                              >
-                                <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded flex items-center gap-1">
-                                  {tag}
-                                  {categoryDescriptions[tag] && (
-                                    <Info className="w-3 h-3 opacity-60" />
-                                  )}
-                                </span>
-                              </Tooltip>
-                            ))}
-                          </div>
-                        )}
-
-                        <a 
-                          href={`https://njit.campuslabs.com/engage/organization/${org.WebsiteKey}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="mt-auto text-sm text-blue-600 hover:underline"
+                    {filteredOrganizations.map((org) => {
+                      return (
+                        <div 
+                          key={org.Id || org.WebsiteKey}
+                          className="bg-white p-4 flex flex-col items-start group hover:bg-gray-50 transition-colors"
                         >
-                          View on Engage →
-                        </a>
-                      </div>
-                    ))}
+                          <img 
+                            src={`/api/organizationAvatar?name=${encodeURIComponent(org.Name)}&size=100`}
+                            alt={`${org.displayName || org.Name} avatar`}
+                            className="organization-avatar mb-3"
+                          />
+
+                          <h3 className="font-semibold text-md text-gray-800 mb-1 group-hover:text-blue-600 transition-colors">{org.displayName || org.Name}</h3>
+                          
+                          {/* Use ExpandableText for Summary in Grid view */}
+                          {org.Summary && (
+                            <ExpandableText 
+                              text={org.Summary} 
+                              maxLines={2} // Keep 2 lines for grid view
+                              className="mb-3" // Add margin bottom to the container
+                            />
+                          )}
+
+                          {/* Display tags using the new configuration */}
+                          {org.tags && org.tags.length > 0 && (
+                            <div className="mb-3 flex flex-wrap gap-2"> {/* Increased gap slightly */}
+                              {org.tags.map(tag => {
+                                const style = getTagStyle(tag);
+                                const IconComponent = style.icon; // Get the icon component
+                                return (
+                                  <Tooltip
+                                    key={tag}
+                                    content={categoryDescriptions[tag] || tag}
+                                  >
+                                    {/* Wrap span in a button and add onClick */}
+                                    <button
+                                      onClick={() => toggleCategory(tag)}
+                                      className="appearance-none focus:outline-none hover:opacity-80 transition-opacity"
+                                      aria-label={`Filter by ${tag}`}
+                                    >
+                                      <span 
+                                        className={`inline-flex items-center text-xs px-2.5 py-1 rounded-md font-medium ${style.bgColor} ${style.textColor}`}
+                                      >
+                                        <IconComponent className="w-3.5 h-3.5 mr-1.5" /> {/* Render icon */}
+                                        {tag}
+                                      </span>
+                                    </button>
+                                  </Tooltip>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          <a 
+                            href={`https://njit.campuslabs.com/engage/organization/${org.WebsiteKey}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="mt-auto text-sm text-blue-600 hover:underline"
+                          >
+                            View on Engage →
+                          </a>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-200">
-                    {filteredOrganizations.map((org) => (
-                      <div 
-                        key={org.Id || org.WebsiteKey}
-                        className="p-4 flex items-center hover:bg-gray-50 transition-colors"
-                      >
-                        <img 
-                          src={`/api/organizationAvatar?name=${encodeURIComponent(org.Name)}&size=80`}
-                          alt={`${org.displayName || org.Name} avatar`}
-                          className="organization-avatar w-16 h-16 mr-4"
-                        />
-                        
-                        <div className="flex-grow min-w-0">
-                          <h3 className="font-semibold text-md text-gray-800 mb-1">{org.displayName || org.Name}</h3>
-                          
-                          {org.Summary && (
-                            <p className="text-sm text-gray-500 mb-2 line-clamp-1">{org.Summary}</p>
-                          )}
-
-                          {/* Display tags from the new system in list view with tooltips */}
-                          {org.tags && org.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {org.tags.map(tag => (
-                                <Tooltip
-                                  key={tag}
-                                  content={categoryDescriptions[tag] || tag}
-                                >
-                                  <span className="inline-block bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded flex items-center gap-1">
-                                    {tag}
-                                    {categoryDescriptions[tag] && (
-                                      <Info className="w-3 h-3 opacity-60" />
-                                    )}
-                                  </span>
-                                </Tooltip>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        
-                        <a 
-                          href={`https://njit.campuslabs.com/engage/organization/${org.WebsiteKey}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-sm text-blue-600 hover:underline whitespace-nowrap ml-4"
+                    {filteredOrganizations.map((org) => {
+                      return (
+                        <div 
+                          key={org.Id || org.WebsiteKey}
+                          className="p-4 flex items-center hover:bg-gray-50 transition-colors"
                         >
-                          View on Engage →
-                        </a>
-                      </div>
-                    ))}
+                          <img 
+                            src={`/api/organizationAvatar?name=${encodeURIComponent(org.Name)}&size=80`}
+                            alt={`${org.displayName || org.Name} avatar`}
+                            className="organization-avatar w-16 h-16 mr-4"
+                          />
+                          
+                          <div className="flex-grow min-w-0">
+                            <h3 className="font-semibold text-md text-gray-800 mb-1">{org.displayName || org.Name}</h3>
+                            
+                            {/* Use ExpandableText for Summary in List view */}
+                            {org.Summary && (
+                              <ExpandableText 
+                                text={org.Summary} 
+                                maxLines={1} // Keep 1 line for list view
+                                className="mb-2" // Add margin bottom to the container
+                              />
+                            )}
+
+                            {/* Display tags using the new configuration in list view */}
+                            {org.tags && org.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-2"> {/* Increased gap slightly */}
+                                {org.tags.map(tag => {
+                                  const style = getTagStyle(tag);
+                                  const IconComponent = style.icon; // Get the icon component
+                                  return (
+                                    <Tooltip
+                                      key={tag}
+                                      content={categoryDescriptions[tag] || tag}
+                                    >
+                                      {/* Wrap span in a button and add onClick */}
+                                      <button
+                                        onClick={() => toggleCategory(tag)}
+                                        className="appearance-none focus:outline-none hover:opacity-80 transition-opacity"
+                                        aria-label={`Filter by ${tag}`}
+                                      >
+                                        <span 
+                                          className={`inline-flex items-center text-xs px-2.5 py-1 rounded-md font-medium ${style.bgColor} ${style.textColor}`}
+                                        >
+                                          <IconComponent className="w-3.5 h-3.5 mr-1.5" /> {/* Render icon */}
+                                          {tag}
+                                        </span>
+                                      </button>
+                                    </Tooltip>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <a 
+                            href={`https://njit.campuslabs.com/engage/organization/${org.WebsiteKey}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline whitespace-nowrap ml-4"
+                          >
+                            View on Engage →
+                          </a>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </>
