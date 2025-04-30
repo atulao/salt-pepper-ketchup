@@ -1,0 +1,3 @@
+@echo off
+echo Starting Salt-Pepper-Ketchup in WSL...
+wsl -d Ubuntu-22.04 -e bash -c "cd /home/jbc/salt-pepper-ketchup && npm run dev" 

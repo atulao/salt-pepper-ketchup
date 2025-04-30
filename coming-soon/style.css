@@ -1,0 +1,35 @@
+body {
+  background-color: #f5f5f5;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  text-align: center;
+}
+
+.container {
+  padding: 20px;
+}
+
+.logo {
+  max-width: 200px;
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-size: 2rem;
+  color: #333;
+}
+
+p {
+  color: #555;
+  margin-top: 10px;
+}
+
+.small {
+  margin-top: 20px;
+  font-size: 0.8rem;
+  color: #888;
+}

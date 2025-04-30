@@ -1,20 +1,212 @@
-import dynamic from 'next/dynamic';
-import { Suspense } from 'react';
+"use client";
 
-// Use dynamic import with no SSR for the CampusEngagementHub component
-const CampusEngagementHub = dynamic(
-  () => import('./components/search/CampusEngagementHub'),
-  { ssr: false }
-);
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Combobox } from '@headlessui/react';
+import TopNavBar from "../../components/TopNavBar";
+import { ChevronDown, Search, Info } from 'lucide-react';
 
-export default function Home() {
+interface BagelOption {
+  degree_title: string;
+  college: string;
+  major: string;
+  isOnline?: boolean;
+  isCertificate?: boolean;
+}
+
+export default function Step1() {
+  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [majors, setMajors] = useState<BagelOption[]>([]);
+  const [selectedMajor, setSelectedMajor] = useState<BagelOption | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  
+  // New state for filters and pagination
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCollege, setSelectedCollege] = useState('');
+  const [selectedDegreeType, setSelectedDegreeType] = useState('');
+  const [pageSize, setPageSize] = useState(24);
+
+  // Derived state for unique filter options
+  const colleges = [...new Set(majors.map(m => m.college))].sort();
+  const degreeTypes = [...new Set(majors.map(m => m.degree_title.split(' ')[0]))].sort();
+
+  // Filter logic
+  const filteredMajors = majors.filter(major => {
+    const matchesSearch = searchQuery === '' || 
+      major.major.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      major.college.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCollege = selectedCollege === '' || major.college === selectedCollege;
+    const matchesDegree = selectedDegreeType === '' || 
+      major.degree_title.startsWith(selectedDegreeType);
+    return matchesSearch && matchesCollege && matchesDegree;
+  });
+
+  useEffect(() => {
+    setMounted(true);
+    fetchMajors();
+  }, []);
+
+  const fetchMajors = async () => {
+    try {
+      const response = await fetch('/api/onboarding/majors');
+      const data = await response.json();
+      setMajors(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching majors:', error);
+      setLoading(false);
+    }
+  };
+
+  const handleMajorSelect = (major: BagelOption) => {
+    setSelectedMajor(major);
+    localStorage.setItem("onboarding_bagel", JSON.stringify({
+      bagel_type: major.degree_title,
+      major_name: major.major,
+      college_name: major.college
+    }));
+  };
+
+  const handleNext = () => {
+    if (selectedMajor) {
+      router.push('/onboarding/step2');
+    }
+  };
+
+  if (!mounted) return null;
+
   return (
-    <main className="min-h-screen">
-      <Suspense fallback={<div className="flex h-screen w-full items-center justify-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-3 border-solid border-blue-500 border-r-transparent"></div>
-      </div>}>
-        <CampusEngagementHub />
-      </Suspense>
-    </main>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
+      <TopNavBar onModeChange={setIsDarkMode} />
+      
+      <main className="max-w-6xl mx-auto py-12 px-4">
+        {/* Diner-style header */}
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-permanent-marker mb-2 text-red-600">
+            What's Your Order?
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Pick your academic program from our specialty menu
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="flex h-64 items-center justify-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-3 border-solid border-red-500 border-r-transparent"></div>
+          </div>
+        ) : (
+          <>
+            {/* Compact filter bar */}
+            <div className="flex flex-wrap items-center gap-4 mb-6">
+              <div className="flex-1 relative">
+                <Combobox value={selectedMajor} onChange={handleMajorSelect}>
+                  <div className="relative">
+                    <Combobox.Input
+                      className="w-full border rounded-lg py-2 px-4 pr-8"
+                      placeholder="Search for your major or college..."
+                      displayValue={(major: BagelOption) => major?.major ?? ''}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <Search className="absolute right-3 top-2.5 h-5 w-5 text-gray-400" />
+                  </div>
+                  <Combobox.Options className="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-lg max-h-60 overflow-auto">
+                    {filteredMajors.map((major, idx) => (
+                      <Combobox.Option
+                        key={idx}
+                        value={major}
+                        className={({ active }) =>
+                          `px-4 py-2 cursor-pointer ${active ? 'bg-red-50 text-red-900' : ''}`
+                        }
+                      >
+                        {major.major}
+                      </Combobox.Option>
+                    ))}
+                  </Combobox.Options>
+                </Combobox>
+              </div>
+
+              <select
+                className="border rounded-lg py-2 px-3 pr-8 appearance-none bg-white"
+                value={selectedCollege}
+                onChange={(e) => setSelectedCollege(e.target.value)}
+              >
+                <option value="">All Colleges</option>
+                {colleges.map(college => (
+                  <option key={college} value={college}>{college}</option>
+                ))}
+              </select>
+
+              <select
+                className="border rounded-lg py-2 px-3 pr-8 appearance-none bg-white"
+                value={selectedDegreeType}
+                onChange={(e) => setSelectedDegreeType(e.target.value)}
+              >
+                <option value="">All Degrees</option>
+                {degreeTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Grid of simplified cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredMajors.slice(0, pageSize).map((major, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleMajorSelect(major)}
+                  className={`bagel-card group relative text-left p-5 rounded-xl border transition-all
+                    ${selectedMajor === major 
+                      ? 'border-red-400 bg-red-50' 
+                      : 'border-transparent hover:border-red-400 hover:shadow-lg'
+                    }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-bold text-lg">{major.major}</h3>
+                    <Info className="h-4 w-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    {major.isOnline && <span title="Online">🌐</span>}
+                    {major.isCertificate && <span title="Certificate">📄</span>}
+                    <span className="ml-auto font-medium">{major.degree_title}</span>
+                  </div>
+                  
+                  <p className="mt-2 text-sm text-gray-600">{major.college}</p>
+                </button>
+              ))}
+            </div>
+
+            {/* Load more button */}
+            {filteredMajors.length > pageSize && (
+              <div className="text-center mt-8">
+                <button
+                  onClick={() => setPageSize(p => p + 24)}
+                  className="px-6 py-2 text-red-600 hover:text-red-700 font-medium"
+                >
+                  Load more options...
+                </button>
+              </div>
+            )}
+
+            {/* Next step button */}
+            <div className="flex justify-center mt-12">
+              <button
+                onClick={handleNext}
+                disabled={!selectedMajor}
+                className={`px-8 py-3 rounded-full font-medium transition-colors ${
+                  selectedMajor
+                    ? 'bg-red-600 text-white hover:bg-red-700'
+                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {selectedMajor ? 'Place Your Order →' : 'Pick Your Major First'}
+              </button>
+            </div>
+          </>
+        )}
+      </main>
+    </div>
   );
 }

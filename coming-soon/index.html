@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Salt Pepper Ketchup - Coming Soon</title>
+  <style>
+    body {
+      background-color: #f5f5f5;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .container {
+      padding: 20px;
+      animation: fadeIn 2s ease-in;
+    }
+
+    .logo {
+      max-width: 200px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #555;
+      margin-top: 10px;
+    }
+
+    .small {
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    .bagel {
+      font-size: 2.5rem;
+      display: inline-block;
+      animation: bounce 2s infinite;
+      margin-left: 8px;
+    }
+
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+      }
+      40% {
+        transform: translateY(-20px);
+      }
+      60% {
+        transform: translateY(-10px);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="logo.png" alt="Salt Pepper Ketchup Logo" class="logo">
+    <h1>LemmeGetta Experience Coming Soon<span class="bagel">🥯</span></h1>
+    <p>Your personalized NJIT campus journey is being cooked up fresh.</p>
+    <p>Get ready to stack your substance, customize your flavor, and unlock your SPK experience!</p>
+    <p class="small">Follow us on LinkedIn soon. Powered by NJ flavor.</p>
+  </div>
+</body>
+</html>

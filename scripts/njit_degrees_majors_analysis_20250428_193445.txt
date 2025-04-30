@@ -1,0 +1,292 @@
+
+=== Degree Programs Overview ===
+Total unique degree programs: 139
+Total unique majors: 62
+Total certificates: 71
+Total online programs: 19
+
+=== Degree Level Distribution ===
+Masters: 68 programs
+Bachelors: 54 programs
+Ph.D.: 20 programs
+Other: 1 programs
+
+=== Program Type Distribution ===
+Traditional: 121 programs
+Online: 19 programs
+Professional Science Master: 3 programs
+
+=== Majors with Multiple Degree Programs ===
+
+Information Systems (9 programs):
+  - B.A. Information Systems
+  - B.S. Business and Information Systems
+  - B.S. Human-Computer Interaction
+  - M.S. Business and Information Systems
+  - M.S. Information Systems
+  - M.S. Information Systems — Professional Science Master's
+  - M.S. in Business & Information Systems
+  - M.S. in Information Systems
+  - Ph.D. Information Systems
+
+Electrical Engineering (7 programs):
+  - B.S. Electrical Engineering
+  - M.S. Electrical Engineering
+  - M.S. Power and Energy Systems
+  - M.S. Telecommunications
+  - M.S. in Electrical Engineering
+  - M.S. in Power & Energy Systems
+  - Ph.D. Electrical Engineering
+
+Business (7 programs):
+  - B.S. Accounting Systems
+  - B.S. Business
+  - B.S. Finance
+  - B.S. Innovation and Entrepreneurship
+  - B.S. Management Information Systems
+  - B.S. Marketing
+  - B.S. in Business
+
+Architecture (5 programs):
+  - B.S. Architecture
+  - Bachelor of Architecture
+  - M.S. Architecture
+  - Master of Architecture
+  - Master of Urban Design
+
+Biology (5 programs):
+  - B.A. Biology
+  - B.S. Biology
+  - M.S. Biology
+  - M.S. Biology of Health
+  - Ph.D. Biology
+
+Industrial Engineering (5 programs):
+  - B.S. Industrial Engineering
+  - M.S. Industrial Engineering
+  - M.S. Occupational Safety & Health Engineering
+  - M.S. in Industrial Engineering
+  - Ph.D. Industrial Engineering
+
+Computer Science (5 programs):
+  - B.A. Computer Science
+  - B.S. Computer Science
+  - M.S. Computer Science
+  - M.S. in Computer Science
+  - Ph.D. Computer Science
+
+Computer Engineering (4 programs):
+  - B.S. Computer Engineering
+  - B.S.E.T. Electrical and Computer Engineering Technology
+  - M.S. Computer Engineering
+  - Ph.D. Computer Engineering
+
+Chemical Engineering (4 programs):
+  - B.S. Chemical Engineering
+  - M.S. Chemical Engineering
+  - M.S. Pharmaceutical Engineering
+  - Ph.D. Chemical Engineering
+
+Civil Engineering (4 programs):
+  - B.S. Civil Engineering
+  - M.S. Civil Engineering
+  - M.S. in Civil Engineering
+  - Ph.D. Civil Engineering
+
+Data Science - Computing Concentration (4 programs):
+  - B.S. Data Science
+  - M.S. Data Science
+  - M.S. in Artificial Intelligence
+  - M.S. in Data Science
+
+Digital Design (4 programs):
+  - B.A. Digital Design
+  - M.S. Digital Design
+  - M.S. in Digital Design
+  - Master of Fine Arts in Digital Design
+
+Chemistry (4 programs):
+  - B.S. Chemistry
+  - M.S. Chemistry
+  - Ph.D. Chemistry
+  - Professional Science Master’s Cell and Gene Therapy Sciences Option in MS Pharmaceutical Chemistry
+
+Business Administration (3 programs):
+  - MBA Program
+  - Masters in Business Administration
+  - Mini-MBA
+
+Biomedical Engineering (3 programs):
+  - B.S. Biomedical Engineering
+  - M.S. Biomedical Engineering
+  - Ph.D. Biomedical Engineering
+
+Applied Physics (3 programs):
+  - B.S. Applied Physics
+  - M.S. Applied Physics
+  - Ph.D. Applied Physics
+
+Environmental Science (3 programs):
+  - B.S. Environmental Science
+  - M.S. Environmental Science
+  - Ph.D. Environmental Science
+
+Cybersecurity (3 programs):
+  - M.S. Cybersecurity and Privacy
+  - M.S. Cybersecurity and Privacy - Professional Science Master's
+  - M.S. in Cybersecurity & Privacy
+
+Mechanical Engineering (3 programs):
+  - B.S. Mechanical Engineering
+  - M.S. Mechanical Engineering
+  - Ph.D. Mechanical Engineering
+
+Information Technology (3 programs):
+  - B.S. Information Technology
+  - M.S. Information Technology Administration and Security
+  - M.S. in IT Administration and Security
+
+Transportation (3 programs):
+  - M.S. Transportation
+  - M.S. in Transportation
+  - Ph.D. Transportation
+
+Engineering Management (2 programs):
+  - M.S. Engineering Management
+  - M.S. in Engineering Management
+
+Humanities (2 programs):
+  - M.S. Applied Science
+  - M.S. Professional and Technical Communication
+
+Materials Science and Engineering (2 programs):
+  - M.S. Materials Science and Engineering
+  - Ph.D. Materials Science and Engineering
+
+Data Science - Statistics Concentration (2 programs):
+  - B.S. Data Science
+  - M.S. Data Science
+
+Communication and Media (2 programs):
+  - B.A. Communication and Media
+  - B.S. Communication and Media
+
+Management (2 programs):
+  - M.S. Management
+  - M.S. in Management
+
+Applied Mathematics (2 programs):
+  - M.S. Applied Mathematics
+  - Ph.D. Mathematical Sciences
+
+History (2 programs):
+  - B.A. History
+  - M.A. History
+
+Environmental Engineering (2 programs):
+  - M.S. Environmental Engineering
+  - Ph.D. Environmental Engineering
+
+=== Degree Programs with Multiple Majors ===
+
+M.S. Data Science (2 majors):
+  - Data Science - Computing Concentration
+  - Data Science - Statistics Concentration
+
+B.S. Data Science (2 majors):
+  - Data Science - Computing Concentration
+  - Data Science - Statistics Concentration
+
+=== Online Programs ===
+  - B.S. in Business
+  - M.S. in Artificial Intelligence
+  - M.S. in Business & Information Systems
+  - M.S. in Civil Engineering
+  - M.S. in Computer Science
+  - M.S. in Cybersecurity & Privacy
+  - M.S. in Data Science
+  - M.S. in Digital Design
+  - M.S. in Electrical Engineering
+  - M.S. in Engineering Management
+  - M.S. in IT Administration and Security
+  - M.S. in Industrial Engineering
+  - M.S. in Information Systems
+  - M.S. in Management
+  - M.S. in Power & Energy Systems
+  - M.S. in Transportation
+  - MBA Program
+  - Mini-MBA
+  - Wind Power Systems Operations & Maintenance Cert
+
+=== Certificates ===
+  - Certificate in Animation Essentials
+  - Certificate in Applied Science
+  - Certificate in Applied Statistical Methods
+  - Certificate in Big Data Essentials
+  - Certificate in Big Data Essentials (Online)
+  - Certificate in Biomedical Device Development
+  - Certificate in Biostatistics Essentials
+  - Certificate in Business Analytics
+  - Certificate in Business Analytics (Online)
+  - Certificate in Business and Information Systems Implementation
+  - Certificate in Business and Information Systems Implementation (Online)
+  - Certificate in Cell & Gene Therapy Sciences
+  - Certificate in Clinical Trials: Design and Analysis
+  - Certificate in Construction Management
+  - Certificate in Construction Management (Online)
+  - Certificate in Data Mining
+  - Certificate in Data Mining (Online)
+  - Certificate in Data Science for Chemical and Materials Engineers (Online)
+  - Certificate in Data Visualization
+  - Certificate in Digital Arts Essentials
+  - Certificate in Digital Marketing Design Essentials
+  - Certificate in Environmental Engineering
+  - Certificate in Environmental Science
+  - Certificate in Environmental Science and Engineering
+  - Certificate in Finance for Managers
+  - Certificate in Financial Technology
+  - Certificate in Game Design and Interactivity Essentials
+  - Certificate in Game Design and Interactivity Essentials (Online)
+  - Certificate in Hydrology and Water Resources Engineering
+  - Certificate in IT Administration
+  - Certificate in IT Administration (Online)
+  - Certificate in Information Security
+  - Certificate in Innovation and Entrepreneurship
+  - Certificate in Innovation and Entrepreneurship Graduate (Online)
+  - Certificate in Instructional Design, Evaluation, and Assessment
+  - Certificate in Intelligent Transportation Systems
+  - Certificate in Management Essentials
+  - Certificate in Management Information Systems
+  - Certificate in Management of Technology
+  - Certificate in Management of Technology (Online)
+  - Certificate in Marketing
+  - Certificate in Network Security and Information Assurance
+  - Certificate in Neuroscience
+  - Certificate in Pharmaceutical Management
+  - Certificate in Pharmaceutical Manufacturing
+  - Certificate in Pharmaceutical Technology
+  - Certificate in Polymers and Plastics
+  - Certificate in Power Systems Engineering
+  - Certificate in Power Systems Engineering (Online)
+  - Certificate in Project Management
+  - Certificate in Social Media Essentials
+  - Certificate in Software Engineering, Analysis, and Design
+  - Certificate in Software Engineering, Analysis, and Design (Online)
+  - Certificate in Supply Chain Engineering
+  - Certificate in Supply Chain Engineering (Online)
+  - Certificate in Technical Communication Essentials
+  - Certificate in Transportation Studies
+  - Certificate in Transportation Studies (Online)
+  - Certificate in UI/UX Digital Design Essentials
+  - Certificate in User Experience Essentials
+  - Certificate in Web Systems Development
+  - Online Certificate in Artificial Intelligence
+  - Online Certificate in Computer Science
+  - Online Certificate in Foundations of Cybersecurity and Privacy
+  - Online Graduate Certificate in Animation
+  - Online Graduate Certificate in Digital Arts
+  - Online Graduate Certificate in UI/UX Digital Design
+  - Online Information Security Certificate
+  - Online Network Security and Information Assurance Certificate
+  - Online Project Management Certificate
+  - Online Wind Power Management Certificate
