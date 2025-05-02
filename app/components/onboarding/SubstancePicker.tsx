@@ -89,24 +89,24 @@ const SubstancePicker: React.FC<SubstancePickerProps> = ({ isDarkMode = false })
 
   return (
     <div className={`relative ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-2 font-serif text-amber-600">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-2 font-serif text-amber-600">
           Stack Some Substance
         </h1>
-        <p className="text-lg text-gray-600 mb-6">
+        <p className="text-base sm:text-lg text-gray-600 mb-4 sm:mb-6 px-2">
           Select at least one option from each category to customize your experience
         </p>
       </div>
       
       {/* Progress Indicators */}
-      <div className="grid grid-cols-3 gap-4 mb-8 max-w-2xl mx-auto">
-        <div className={`p-3 rounded-lg text-center transition-colors ${
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6 sm:mb-8 max-w-xs sm:max-w-2xl mx-auto">
+        <div className={`p-2 sm:p-3 rounded-lg text-center transition-colors ${
           getCategoryStatus('events') 
             ? 'bg-amber-100 border border-amber-300 text-amber-800' 
             : 'bg-gray-100 border border-gray-200 text-gray-500'
         }`}>
-          <Film className="h-5 w-5 mx-auto mb-1" />
-          <span className="text-sm font-medium">Events</span>
+          <Film className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1" />
+          <span className="text-xs sm:text-sm font-medium">Events</span>
           {getCategoryStatus('events') && (
             <div className="mt-1 text-xs text-amber-600 flex items-center justify-center">
               <Check className="h-3 w-3 mr-1" /> Selected
@@ -114,13 +114,13 @@ const SubstancePicker: React.FC<SubstancePickerProps> = ({ isDarkMode = false })
           )}
         </div>
         
-        <div className={`p-3 rounded-lg text-center transition-colors ${
+        <div className={`p-2 sm:p-3 rounded-lg text-center transition-colors ${
           getCategoryStatus('clubs') 
             ? 'bg-amber-100 border border-amber-300 text-amber-800' 
             : 'bg-gray-100 border border-gray-200 text-gray-500'
         }`}>
-          <Users className="h-5 w-5 mx-auto mb-1" />
-          <span className="text-sm font-medium">Clubs</span>
+          <Users className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1" />
+          <span className="text-xs sm:text-sm font-medium">Clubs</span>
           {getCategoryStatus('clubs') && (
             <div className="mt-1 text-xs text-amber-600 flex items-center justify-center">
               <Check className="h-3 w-3 mr-1" /> Selected
@@ -128,13 +128,13 @@ const SubstancePicker: React.FC<SubstancePickerProps> = ({ isDarkMode = false })
           )}
         </div>
         
-        <div className={`p-3 rounded-lg text-center transition-colors ${
+        <div className={`p-2 sm:p-3 rounded-lg text-center transition-colors ${
           getCategoryStatus('goals') 
             ? 'bg-amber-100 border border-amber-300 text-amber-800' 
             : 'bg-gray-100 border border-gray-200 text-gray-500'
         }`}>
-          <Target className="h-5 w-5 mx-auto mb-1" />
-          <span className="text-sm font-medium">Goals</span>
+          <Target className="h-4 w-4 sm:h-5 sm:w-5 mx-auto mb-1" />
+          <span className="text-xs sm:text-sm font-medium">Goals</span>
           {getCategoryStatus('goals') && (
             <div className="mt-1 text-xs text-amber-600 flex items-center justify-center">
               <Check className="h-3 w-3 mr-1" /> Selected
@@ -143,24 +143,24 @@ const SubstancePicker: React.FC<SubstancePickerProps> = ({ isDarkMode = false })
         </div>
       </div>
       
-      <div className="space-y-10 mb-12">
+      <div className="space-y-8 sm:space-y-10 mb-10 sm:mb-12">
         {/* Events Section */}
         <section>
-          <div className="flex items-center mb-4">
-            <Film className="h-6 w-6 text-amber-600 mr-2" />
-            <h2 className="text-2xl font-bold text-gray-800">
+          <div className="flex items-center mb-3 sm:mb-4">
+            <Film className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600 mr-2" />
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
               Campus Events
             </h2>
           </div>
-          <p className="text-gray-600 mb-4">
+          <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
             Select the types of events you'd like to attend at NJIT
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             {substanceOptions.events.map(event => (
               <button
                 key={event}
                 onClick={() => toggleEvent(event)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors touch-manipulation ${
                   events.includes(event)
                     ? 'bg-amber-100 text-amber-800 border border-amber-300'
                     : isDarkMode 
@@ -176,21 +176,21 @@ const SubstancePicker: React.FC<SubstancePickerProps> = ({ isDarkMode = false })
         
         {/* Clubs Section */}
         <section>
-          <div className="flex items-center mb-4">
-            <Users className="h-6 w-6 text-amber-600 mr-2" />
-            <h2 className="text-2xl font-bold text-gray-800">
+          <div className="flex items-center mb-3 sm:mb-4">
+            <Users className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600 mr-2" />
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
               Clubs & Organizations
             </h2>
           </div>
-          <p className="text-gray-600 mb-4">
+          <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
             Select the types of clubs you're interested in joining
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             {substanceOptions.clubs.map(club => (
               <button
                 key={club}
                 onClick={() => toggleClub(club)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors touch-manipulation ${
                   clubs.includes(club)
                     ? 'bg-amber-100 text-amber-800 border border-amber-300'
                     : isDarkMode 
@@ -206,21 +206,21 @@ const SubstancePicker: React.FC<SubstancePickerProps> = ({ isDarkMode = false })
         
         {/* Goals Section */}
         <section>
-          <div className="flex items-center mb-4">
-            <Target className="h-6 w-6 text-amber-600 mr-2" />
-            <h2 className="text-2xl font-bold text-gray-800">
+          <div className="flex items-center mb-3 sm:mb-4">
+            <Target className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600 mr-2" />
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
               Your Goals at NJIT
             </h2>
           </div>
-          <p className="text-gray-600 mb-4">
+          <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
             Select what you want to accomplish during your time at NJIT
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             {substanceOptions.goals.map(goal => (
               <button
                 key={goal}
                 onClick={() => toggleGoal(goal)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-colors touch-manipulation ${
                   goals.includes(goal)
                     ? 'bg-amber-100 text-amber-800 border border-amber-300'
                     : isDarkMode 
@@ -236,10 +236,10 @@ const SubstancePicker: React.FC<SubstancePickerProps> = ({ isDarkMode = false })
       </div>
       
       {/* Navigation Buttons */}
-      <div className="flex justify-between mt-8">
+      <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-0 mt-6 sm:mt-8">
         <button
           onClick={handleBack}
-          className="px-6 py-2 rounded-md border border-gray-300 flex items-center text-gray-700 hover:bg-gray-50"
+          className="order-2 sm:order-1 px-4 sm:px-6 py-2 rounded-md border border-gray-300 flex items-center justify-center sm:justify-start text-gray-700 hover:bg-gray-50 touch-manipulation w-full sm:w-auto"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Step 1
@@ -248,7 +248,7 @@ const SubstancePicker: React.FC<SubstancePickerProps> = ({ isDarkMode = false })
         <button
           onClick={handleNext}
           disabled={!isValid}
-          className={`px-6 py-2 rounded-md font-medium transition-colors ${
+          className={`order-1 sm:order-2 px-4 sm:px-6 py-3 rounded-md font-medium transition-colors touch-manipulation w-full sm:w-auto text-base sm:text-lg ${
             isValid
               ? 'bg-amber-600 text-white hover:bg-amber-700'
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'

@@ -222,22 +222,22 @@ const BagelPicker: React.FC<BagelPickerProps> = ({ isDarkMode = false }) => {
 
   return (
     <div className={`relative ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-2 font-serif text-amber-600">
-        LemmeGetta Bagel🥯
+      <div className="text-center mb-8 sm:mb-10">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-3 font-serif text-amber-600">
+          LemmeGetta Bagel🥯
         </h1>
-        <p className="text-lg text-gray-600 mb-6">
-        What academic flavor are you cravin'?
+        <p className="text-base sm:text-lg text-gray-600 px-2">
+          What academic flavor are you cravin'?
         </p>
       </div>
 
       {/* Search and Filter Bar */}
-      <div className="flex flex-col md:flex-row gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 mb-4 sm:mb-6">
         <div className="relative flex-1">
           <div className="relative">
             <input
               type="text"
-              className={`w-full h-12 pl-10 pr-4 rounded-lg border-2 border-amber-300 focus:border-amber-500 focus:outline-none ${
+              className={`w-full h-10 sm:h-12 pl-10 pr-4 rounded-lg border-2 border-amber-300 focus:border-amber-500 focus:outline-none text-sm sm:text-base ${
                 isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
               }`}
               placeholder="Search for your major..."
@@ -246,25 +246,25 @@ const BagelPicker: React.FC<BagelPickerProps> = ({ isDarkMode = false }) => {
               onClick={() => setIsOpen(true)}
             />
             <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-              <Search className="h-5 w-5 text-amber-500" />
+              <Search className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500" />
             </div>
             {query && (
               <button 
-                className="absolute inset-y-0 right-0 flex items-center pr-3"
+                className="absolute inset-y-0 right-0 flex items-center pr-3 touch-manipulation"
                 onClick={() => {
                   setQuery('');
                   setSelectedMajor(null);
                   setSelectedProgram(null);
                 }}
               >
-                <X className="h-5 w-5 text-gray-400" />
+                <X className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
               </button>
             )}
           </div>
 
           {/* Dropdown results */}
           {isOpen && query && (
-            <div className={`absolute z-10 mt-1 w-full shadow-lg max-h-80 rounded-md py-1 text-base overflow-auto focus:outline-none ${
+            <div className={`absolute z-10 mt-1 w-full shadow-lg max-h-60 sm:max-h-80 rounded-md py-1 text-sm sm:text-base overflow-auto focus:outline-none ${
               isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
             }`}>
               {filteredMajors.length === 0 ? (
@@ -275,23 +275,23 @@ const BagelPicker: React.FC<BagelPickerProps> = ({ isDarkMode = false }) => {
                 filteredMajors.map((major) => (
                   <div
                     key={major.major}
-                    className={`relative cursor-pointer select-none py-3 pl-5 pr-9 hover:bg-amber-50 hover:text-amber-900 ${
+                    className={`relative cursor-pointer select-none py-2 sm:py-3 pl-4 sm:pl-5 pr-9 hover:bg-amber-50 hover:text-amber-900 touch-manipulation ${
                       selectedMajor?.major === major.major ? 'bg-amber-50 text-amber-900' : isDarkMode ? 'text-white hover:text-gray-900' : 'text-gray-900'
                     }`}
                     onClick={() => handleSelectMajor(major)}
                   >
                     <div className="flex flex-col">
-                      <span className={`block truncate font-medium ${selectedMajor?.major === major.major ? 'font-semibold' : ''}`}>
+                      <span className={`block truncate font-medium text-sm sm:text-base ${selectedMajor?.major === major.major ? 'font-semibold' : ''}`}>
                         {major.major}
                       </span>
-                      <span className="block truncate text-sm text-gray-500">
+                      <span className="block truncate text-xs sm:text-sm text-gray-500">
                         {major.college} • {major.programs.length} program{major.programs.length !== 1 ? 's' : ''}
                       </span>
                     </div>
 
                     {selectedMajor?.major === major.major && (
                       <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-amber-600">
-                        <Check className="h-5 w-5" aria-hidden="true" />
+                        <Check className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                       </span>
                     )}
                   </div>
@@ -302,42 +302,44 @@ const BagelPicker: React.FC<BagelPickerProps> = ({ isDarkMode = false }) => {
         </div>
 
         {/* Filter Button */}
-        <button 
-          className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 ${
-            showFilters 
-              ? 'bg-amber-100 border-amber-300 text-amber-800' 
-              : 'border-gray-300 hover:bg-gray-100'
-          }`}
-          onClick={() => setShowFilters(!showFilters)}
-        >
-          <Filter className="h-5 w-5" />
-          <span>Filters</span>
-        </button>
+        <div className="flex gap-2">
+          <button 
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg border-2 min-h-[2.5rem] sm:min-h-[3rem] ${
+              showFilters 
+                ? 'bg-amber-100 border-amber-300 text-amber-800' 
+                : 'border-gray-300 hover:bg-gray-100'
+            }`}
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-sm sm:text-base">Filters</span>
+          </button>
 
-        {/* View Toggle */}
-        <div className="flex rounded-lg border-2 border-gray-300 overflow-hidden">
-          <button 
-            className={`flex-1 px-4 py-2 ${viewMode === 'grid' ? 'bg-amber-100 text-amber-800' : 'bg-white hover:bg-gray-100'}`}
-            onClick={() => setViewMode('grid')}
-          >
-            Grid
-          </button>
-          <button 
-            className={`flex-1 px-4 py-2 ${viewMode === 'list' ? 'bg-amber-100 text-amber-800' : 'bg-white hover:bg-gray-100'}`}
-            onClick={() => setViewMode('list')}
-          >
-            List
-          </button>
+          {/* View Toggle */}
+          <div className="flex flex-1 sm:flex-none rounded-lg border-2 border-gray-300 overflow-hidden min-h-[2.5rem] sm:min-h-[3rem]">
+            <button 
+              className={`flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base ${viewMode === 'grid' ? 'bg-amber-100 text-amber-800' : 'bg-white hover:bg-gray-100'}`}
+              onClick={() => setViewMode('grid')}
+            >
+              Grid
+            </button>
+            <button 
+              className={`flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base ${viewMode === 'list' ? 'bg-amber-100 text-amber-800' : 'bg-white hover:bg-gray-100'}`}
+              onClick={() => setViewMode('list')}
+            >
+              List
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className={`mb-6 p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-          <h3 className="font-medium mb-3">Filter by degree type:</h3>
-          <div className="flex flex-wrap gap-3">
+        <div className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+          <h3 className="font-medium mb-2 sm:mb-3 text-sm sm:text-base">Filter by degree type:</h3>
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <button
-              className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium touch-manipulation ${
                 filters.showBachelors ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'
               }`}
               onClick={() => toggleFilter('showBachelors')}
@@ -345,7 +347,7 @@ const BagelPicker: React.FC<BagelPickerProps> = ({ isDarkMode = false }) => {
               Bachelor's
             </button>
             <button
-              className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium touch-manipulation ${
                 filters.showMasters ? 'bg-blue-100 text-blue-800' : 'bg-gray-200 text-gray-600'
               }`}
               onClick={() => toggleFilter('showMasters')}
@@ -353,7 +355,7 @@ const BagelPicker: React.FC<BagelPickerProps> = ({ isDarkMode = false }) => {
               Master's
             </button>
             <button
-              className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium touch-manipulation ${
                 filters.showPhD ? 'bg-purple-100 text-purple-800' : 'bg-gray-200 text-gray-600'
               }`}
               onClick={() => toggleFilter('showPhD')}
@@ -361,7 +363,7 @@ const BagelPicker: React.FC<BagelPickerProps> = ({ isDarkMode = false }) => {
               Ph.D.
             </button>
             <button
-              className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium touch-manipulation ${
                 filters.showCertificate ? 'bg-amber-100 text-amber-800' : 'bg-gray-200 text-gray-600'
               }`}
               onClick={() => toggleFilter('showCertificate')}
@@ -369,14 +371,14 @@ const BagelPicker: React.FC<BagelPickerProps> = ({ isDarkMode = false }) => {
               Certificate
             </button>
 
-            <div className="ml-auto">
+            <div className="ml-auto mt-2 sm:mt-0">
               <button
-                className={`px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1 ${
+                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium flex items-center gap-1 touch-manipulation ${
                   filters.onlyOnline ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-200 text-gray-600'
                 }`}
                 onClick={() => toggleFilter('onlyOnline')}
               >
-                <Coffee className="h-4 w-4" />
+                <Coffee className="h-3 w-3 sm:h-4 sm:w-4" />
                 Online Only
               </button>
             </div>
@@ -387,23 +389,23 @@ const BagelPicker: React.FC<BagelPickerProps> = ({ isDarkMode = false }) => {
       {/* Loading indicator */}
       {loading ? (
         <div className="flex h-64 items-center justify-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-amber-500 border-r-transparent"></div>
+          <div className="inline-block h-6 w-6 sm:h-8 sm:w-8 animate-spin rounded-full border-4 border-solid border-amber-500 border-r-transparent"></div>
         </div>
       ) : (
         <>
           {/* Content area */}
           {selectedMajor ? (
             // Selected major details
-            <div className="mt-4 p-6 rounded-lg border border-amber-200 bg-amber-50">
-              <div className="mb-2 text-xl font-bold text-amber-800">{selectedMajor.major}</div>
-              <div className="mb-4 text-sm text-gray-600">{selectedMajor.college}</div>
+            <div className="mt-4 p-4 sm:p-6 rounded-lg border border-amber-200 bg-amber-50">
+              <div className="mb-1 sm:mb-2 text-lg sm:text-xl font-bold text-amber-800">{selectedMajor.major}</div>
+              <div className="mb-3 sm:mb-4 text-xs sm:text-sm text-gray-600">{selectedMajor.college}</div>
 
-              <h3 className="font-medium mb-2 text-gray-700">Available Programs:</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+              <h3 className="font-medium mb-2 text-sm sm:text-base text-gray-700">Available Programs:</h3>
+              <div className="grid grid-cols-1 gap-2 sm:gap-3 mb-4">
                 {selectedMajor.programs.map((program) => (
                   <div 
                     key={program.degree_title}
-                    className={`p-3 rounded border cursor-pointer ${
+                    className={`p-3 rounded border cursor-pointer touch-manipulation ${
                       selectedProgram?.degree_title === program.degree_title
                         ? 'border-amber-500 bg-amber-100'
                         : 'border-gray-200 hover:bg-amber-50'
@@ -415,8 +417,8 @@ const BagelPicker: React.FC<BagelPickerProps> = ({ isDarkMode = false }) => {
                         {getDegreeIcon(program.degree_title)}
                       </div>
                       <div>
-                        <div className="font-medium">{program.degree_title}</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="font-medium text-sm sm:text-base">{program.degree_title}</div>
+                        <div className="text-xs sm:text-sm text-gray-500">
                           {getDegreeType(program.degree_title)}
                           {program.online && <span className="ml-2 text-indigo-600">• Online</span>}
                         </div>
@@ -429,7 +431,7 @@ const BagelPicker: React.FC<BagelPickerProps> = ({ isDarkMode = false }) => {
               <button
                 onClick={handleNext}
                 disabled={!selectedProgram}
-                className={`w-full py-3 rounded-md font-medium transition-colors ${
+                className={`w-full py-3 rounded-md font-medium transition-colors touch-manipulation text-base sm:text-lg min-h-[3rem] ${
                   selectedProgram
                     ? 'bg-amber-600 text-white hover:bg-amber-700'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -442,28 +444,28 @@ const BagelPicker: React.FC<BagelPickerProps> = ({ isDarkMode = false }) => {
             // Grid or list view of all majors
             <>
               {filteredMajors.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-500">No programs match your search criteria.</p>
+                <div className="text-center py-8 sm:py-12">
+                  <p className="text-gray-500 text-sm sm:text-base">No programs match your search criteria.</p>
                 </div>
               ) : (
-                <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-4'}>
+                <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4' : 'space-y-3 sm:space-y-4'}>
                   {filteredMajors.map((major) => (
                     <div
                       key={major.major}
                       className={`${
                         viewMode === 'grid' 
-                          ? 'p-4 rounded-lg border border-gray-200 hover:border-amber-300 hover:shadow-md cursor-pointer' 
-                          : 'p-4 rounded-lg border border-gray-200 hover:border-amber-300 hover:shadow-md cursor-pointer'
+                          ? 'p-3 sm:p-4 rounded-lg border border-gray-200 hover:border-amber-300 hover:shadow-md cursor-pointer touch-manipulation' 
+                          : 'p-3 sm:p-4 rounded-lg border border-gray-200 hover:border-amber-300 hover:shadow-md cursor-pointer touch-manipulation'
                       } ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
                       onClick={() => handleSelectMajor(major)}
                     >
-                      <h3 className="font-bold text-lg mb-1 text-amber-600">{major.major}</h3>
-                      <p className="text-sm text-gray-500 mb-2">{major.college}</p>
+                      <h3 className="font-bold text-base sm:text-lg mb-1 text-amber-600">{major.major}</h3>
+                      <p className="text-xs sm:text-sm text-gray-500 mb-2">{major.college}</p>
                       
                       <div className="flex flex-wrap gap-1 mb-2">
                         {/* Degree types available */}
                         {Array.from(new Set(major.programs.map(p => getDegreeType(p.degree_title)))).map(type => (
-                          <span key={type} className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs ${
+                          <span key={type} className={`inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-md text-xs ${
                             type === 'Bachelor\'s' ? 'bg-green-100 text-green-800' :
                             type === 'Master\'s' ? 'bg-blue-100 text-blue-800' :
                             type === 'Ph.D.' ? 'bg-purple-100 text-purple-800' :
@@ -475,14 +477,14 @@ const BagelPicker: React.FC<BagelPickerProps> = ({ isDarkMode = false }) => {
                         
                         {/* Online indicator if any program is online */}
                         {major.programs.some(p => p.online) && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs bg-indigo-100 text-indigo-800">
+                          <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded-md text-xs bg-indigo-100 text-indigo-800">
                             <Coffee className="h-3 w-3 mr-1" />
                             Online
                           </span>
                         )}
                       </div>
                       
-                      <div className="text-sm text-gray-600">
+                      <div className="text-xs sm:text-sm text-gray-600">
                         {major.programs.length} program{major.programs.length !== 1 ? 's' : ''}
                       </div>
                     </div>

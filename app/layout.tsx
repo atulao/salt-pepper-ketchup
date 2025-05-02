@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import AuthSessionProvider from './components/auth/AuthSessionProvider';
 // import Script from 'next/script'; // No longer needed for theme init
 
 const inter = Inter({ subsets: ['latin'] });
@@ -30,7 +31,9 @@ export default function RootLayout({
       </head>
       {/* Ensure body doesn't have default dark classes server-side */}
       <body className={`${inter.className} transition-colors duration-300`}>
-        {children}
+        <AuthSessionProvider>
+          {children}
+        </AuthSessionProvider>
       </body>
     </html>
   );

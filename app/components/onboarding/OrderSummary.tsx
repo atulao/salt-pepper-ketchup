@@ -95,17 +95,17 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ isDarkMode = false }) => {
 
   return (
     <div className={`relative ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-2 font-serif text-amber-600">
+      <div className="text-center mb-6 sm:mb-8">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-2 font-serif text-amber-600">
           Here's Your Order — Hot and Fresh!
         </h1>
-        <p className="text-lg text-gray-600 mb-6">
+        <p className="text-base sm:text-lg text-gray-600 mb-4 sm:mb-6 px-2 sm:px-0">
           Review and confirm your selections to complete your NJIT experience
         </p>
       </div>
       
       {/* Order Summary Card */}
-      <div className={`rounded-lg border p-6 mb-10 ${
+      <div className={`rounded-lg border p-4 sm:p-6 mb-8 sm:mb-10 ${
         isDarkMode 
           ? 'bg-gray-800 border-gray-700' 
           : 'bg-amber-50 border-amber-200'
@@ -113,30 +113,30 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ isDarkMode = false }) => {
         <h2 className="text-xl font-bold mb-4 text-amber-700">Your SPK Order:</h2>
         
         {/* Bagel (Major) Section */}
-        <div className="mb-6">
+        <div className="mb-5 sm:mb-6">
           <div className="flex items-center mb-2">
             <span className="text-2xl mr-2">🥯</span>
             <h3 className="text-lg font-medium">Your Bagel:</h3>
           </div>
-          <div className="ml-9 pl-1 border-l-2 border-amber-300">
-            <p className="text-lg">
+          <div className="ml-7 sm:ml-9 pl-1 border-l-2 border-amber-300">
+            <p className="text-base sm:text-lg">
               <span className="font-semibold">{bagel_type}</span> 
               <span className="text-gray-500"> from </span>
-              <span className="text-sm text-gray-500">{college_name}</span>
+              <span className="text-xs sm:text-sm text-gray-500">{college_name}</span>
             </p>
-            <p className="text-gray-600">{major_name}</p>
+            <p className="text-sm sm:text-base text-gray-600">{major_name}</p>
           </div>
         </div>
         
         {/* Substance Section */}
-        <div className="mb-6">
+        <div className="mb-5 sm:mb-6">
           <div className="flex items-center mb-2">
             <span className="text-2xl mr-2">🍳</span>
             <h3 className="text-lg font-medium">Your Toppings:</h3>
           </div>
-          <div className="ml-9 pl-1 border-l-2 border-amber-300">
+          <div className="ml-7 sm:ml-9 pl-1 border-l-2 border-amber-300">
             <div className="mb-2">
-              <p className="text-sm font-medium text-amber-700">Events:</p>
+              <p className="text-xs sm:text-sm font-medium text-amber-700">Events:</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {events.map(event => (
                   <span key={event} className="px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-800">
@@ -146,7 +146,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ isDarkMode = false }) => {
               </div>
             </div>
             <div className="mb-2">
-              <p className="text-sm font-medium text-amber-700">Clubs:</p>
+              <p className="text-xs sm:text-sm font-medium text-amber-700">Clubs:</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {clubs.map(club => (
                   <span key={club} className="px-2 py-0.5 text-xs rounded bg-purple-100 text-purple-800">
@@ -156,7 +156,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ isDarkMode = false }) => {
               </div>
             </div>
             <div>
-              <p className="text-sm font-medium text-amber-700">Goals:</p>
+              <p className="text-xs sm:text-sm font-medium text-amber-700">Goals:</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {goals.map(goal => (
                   <span key={goal} className="px-2 py-0.5 text-xs rounded bg-green-100 text-green-800">
@@ -174,14 +174,14 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ isDarkMode = false }) => {
             <span className="text-2xl mr-2">🧂🌶️🍅</span>
             <h3 className="text-lg font-medium">The Finishing Touch:</h3>
           </div>
-          <div className="ml-9 pl-1 border-l-2 border-amber-300">
-            <p className="text-gray-600">Salt-Pepper-Ketchup: The essential NJIT experience!</p>
+          <div className="ml-7 sm:ml-9 pl-1 border-l-2 border-amber-300">
+            <p className="text-sm sm:text-base text-gray-600">Salt-Pepper-Ketchup: The essential NJIT experience!</p>
           </div>
         </div>
         
         {/* Summary Quote */}
-        <div className="mt-8 p-4 bg-amber-100 rounded-lg border border-amber-200 text-center">
-          <p className="italic text-lg text-amber-800">
+        <div className="mt-6 sm:mt-8 p-3 sm:p-4 bg-amber-100 rounded-lg border border-amber-200 text-center">
+          <p className="italic text-base sm:text-lg text-amber-800">
             "Lemme getta {major_name} Bagel with {formatSubstance()}, Salt-Pepper-Ketchup!"
           </p>
         </div>
@@ -189,13 +189,13 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ isDarkMode = false }) => {
       
       {/* Animation Area */}
       {orderPlaced && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 mb-8 text-center min-h-[200px] flex flex-col items-center justify-center">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 sm:p-6 mb-6 sm:mb-8 text-center min-h-[180px] sm:min-h-[200px] flex flex-col items-center justify-center">
           {currentStep >= 0 && currentStep < ANIMATION_STEPS.length && (
             <>
-              <div className="text-5xl mb-4 animate-bounce-in">
+              <div className="text-4xl sm:text-5xl mb-3 sm:mb-4 animate-bounce-in">
                 {ANIMATION_STEPS[currentStep].emoji}
               </div>
-              <p className="text-lg font-medium text-amber-800 animate-fade-in">
+              <p className="text-base sm:text-lg font-medium text-amber-800 animate-fade-in">
                 {ANIMATION_STEPS[currentStep].label}
               </p>
             </>
@@ -203,11 +203,11 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ isDarkMode = false }) => {
           
           {animationComplete && (
             <div className="mt-4 flex flex-col items-center animate-fade-in">
-              <div className="text-3xl mb-2 animate-slide-in">🥯 + 🍳 + 🧂🌶️🍅 = 😋</div>
-              <p className="text-xl font-bold text-green-600 flex items-center animate-fade-in">
-                <Check className="mr-2 h-5 w-5" /> Your SPK is Ready!
+              <div className="text-2xl sm:text-3xl mb-2 animate-slide-in">🥯 + 🍳 + 🧂🌶️🍅 = 😋</div>
+              <p className="text-lg sm:text-xl font-bold text-green-600 flex items-center animate-fade-in">
+                <Check className="mr-2 h-4 sm:h-5 w-4 sm:w-5" /> Your SPK is Ready!
               </p>
-              <p className="text-gray-600 mt-2 fade-in">Redirecting to dashboard...</p>
+              <p className="text-sm sm:text-base text-gray-600 mt-2 fade-in">Redirecting to dashboard...</p>
             </div>
           )}
         </div>
@@ -215,10 +215,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ isDarkMode = false }) => {
       
       {/* Navigation Buttons */}
       {!orderPlaced && (
-        <div className="flex justify-between mt-8">
+        <div className="flex flex-col sm:flex-row justify-between mt-6 sm:mt-8 gap-3 sm:gap-0">
           <button
             onClick={handleBack}
-            className="px-6 py-2 rounded-md border border-gray-300 flex items-center text-gray-700 hover:bg-gray-50"
+            className="px-4 sm:px-6 py-2 rounded-md border border-gray-300 flex items-center justify-center sm:justify-start text-gray-700 hover:bg-gray-50"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Step 2
@@ -227,7 +227,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ isDarkMode = false }) => {
           <button
             onClick={handlePlaceOrder}
             disabled={!hasAllData}
-            className={`px-6 py-3 rounded-md font-medium text-lg transition-transform transform active:scale-95 diner-btn-pop ${
+            className={`px-4 sm:px-6 py-2 sm:py-3 rounded-md font-medium text-base sm:text-lg transition-transform transform active:scale-95 diner-btn-pop ${
               hasAllData
                 ? 'bg-amber-600 text-white hover:bg-amber-700'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -240,7 +240,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ isDarkMode = false }) => {
       
       {/* Missing Data Warning */}
       {!hasAllData && !orderPlaced && (
-        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-800 text-sm">
+        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-800 text-xs sm:text-sm">
           Please complete steps 1 and 2 before placing your order.
         </div>
       )}
