@@ -15,6 +15,9 @@ Salt-Pepper-Ketchup transforms the typical campus event portal into a dynamic, A
 - **Commuter/Resident Modes:** Toggle between different modes to optimize recommendations based on your campus lifestyle.
 - **Campus Building Directory:** Interactive map and building information to help students navigate the campus.
 - **Dark Mode Support:** Fully responsive dark mode with seamless transitions and persistent user preference.
+- **Authentication System:** Secure user authentication with NextAuth.js supporting multiple login methods.
+- **Onboarding Flow:** Structured onboarding process to capture user preferences and academic information.
+- **Progress Saving:** Ability to save progress during onboarding for later completion.
 
 ## Technical Stack
 
@@ -24,6 +27,9 @@ Salt-Pepper-Ketchup transforms the typical campus event portal into a dynamic, A
 - **Maps Integration:** MapBox for static maps of campus buildings
 - **API:** RESTful endpoints for search, suggestions, and user preferences
 - **Theming:** CSS variables and custom React hooks for theme management
+- **Authentication:** NextAuth.js with multiple authentication providers
+- **Database:** Prisma ORM with support for multiple database backends
+- **State Management:** Zustand for client-side state management
 
 ## Project Architecture
 
@@ -32,8 +38,14 @@ The project follows a modular component architecture:
 ```
 app/
 ├── api/                       # API routes for server-side functionality
+│   ├── auth/                  # Authentication API routes
+│   │   └── [...nextauth]/     # NextAuth.js API routes
+│   ├── onboarding/            # Onboarding-related API endpoints
+│   └── search-events/         # Event search API endpoints
 ├── components/                # UI Components
+│   ├── auth/                  # Authentication components
 │   ├── client-wrappers/       # Client-side component wrappers
+│   ├── dashboard/             # Dashboard components
 │   ├── events/                # Event-related components
 │   │   ├── EventCard.tsx      # Individual event display card
 │   │   ├── EventDetailPage.tsx # Full event details page
@@ -45,6 +57,11 @@ app/
 │   │   ├── CampusMap.tsx      # Campus map component
 │   │   ├── FullCampusMap.tsx  # Full-screen campus map
 │   │   └── campus-building-data.ts # Building coordinates and aliases
+│   ├── onboarding/            # Onboarding process components
+│   │   ├── BagelPicker.tsx    # Major selection component (Step 1)
+│   │   ├── SubstancePicker.tsx # Interests selection component (Step 2)
+│   │   ├── OrderSummary.tsx   # Summary and confirmation component (Step 3)
+│   │   └── SaveProgress.tsx   # Component to save onboarding progress
 │   └── search/                # Search-related components
 │       ├── CampusEngagementHub.tsx # Main container component
 │       ├── SearchInput.tsx    # Search input field with voice capability
@@ -52,17 +69,47 @@ app/
 │       ├── FilterPanel.tsx    # Category and feature filters
 │       ├── PersonaToggle.tsx  # Commuter/Resident mode toggle
 │       └── ResultsList.tsx    # Event results display
+├── auth/                      # Authentication pages
+│   ├── login/                 # Login page
+│   └── register/              # Registration page
 ├── buildings/                 # Building-related pages
 ├── config/                    # Configuration files (API keys, etc.)
 ├── contexts/                  # React context providers
+├── dashboard/                 # Dashboard pages
 ├── event/                     # Event-related pages
 ├── hooks/                     # Custom React hooks
+├── onboarding/                # Onboarding flow pages
+│   ├── step1/                 # Major selection page
+│   ├── step2/                 # Interests selection page
+│   └── step3/                 # Summary and confirmation page
+├── store/                     # State management (Zustand)
 ├── types/                     # TypeScript type definitions
 └── utils/                     # Utility functions
-    ├── data-fetcher.ts        # Data fetching utilities
-    ├── formatters.ts          # Text and date formatting utilities 
-    └── theme-utils.ts         # Dark mode detection and theme management utilities
 ```
+
+## Authentication System
+
+The application uses NextAuth.js to provide a secure authentication system:
+
+- **Multiple Providers:** Support for credentials, Google, and LinkedIn authentication
+- **Protected Routes:** Middleware-based route protection for authenticated areas
+- **User Sessions:** Persistent user sessions with JWT tokens
+- **Profile Management:** User profile data synced with authentication details
+- **Development Mode:** Special development mode toggles to bypass authentication during development
+
+## Onboarding Process
+
+The application includes a three-step onboarding process:
+
+1. **Step 1 - Major Selection (BagelPicker):** Users select their academic major from a comprehensive list, organized by college.
+2. **Step 2 - Interests Selection (SubstancePicker):** Users select their interests from categories including events, clubs, and goals.
+3. **Step 3 - Summary and Confirmation (OrderSummary):** Users review their selections and confirm to complete onboarding.
+
+The onboarding process includes:
+- **Progress Tracking:** Sequential steps with completion tracking
+- **Data Persistence:** User selections saved in the store
+- **Progress Saving:** Ability to save progress and resume later
+- **Navigation Controls:** Back and continue buttons with validation
 
 ## Key Components
 
@@ -87,13 +134,12 @@ app/
 - **CampusMap:** Interactive map of the campus with building markers
 - **FullCampusMap:** Full-screen campus map for detailed navigation
 
-### Theme Management
+### Dashboard and User Experience
 
-- **ThemeToggle:** Component for toggling between light and dark mode
-- **theme-utils.ts:** Utility functions for theme management:
-  - `useDarkMode()`: Custom React hook that detects dark mode changes using MutationObserver
-  - `getThemeClasses()`: Helper function to apply the appropriate classes based on theme
-  - `applyTheme()`: Function to directly manipulate theme classes on document elements
+- **DashboardTour:** Interactive tour of the dashboard for new users
+- **RecommendationsPanel:** Personalized event and resource recommendations
+- **UserProfile:** User profile management with preferences
+- **NotificationsPanel:** System and event notifications
 
 ## Getting Started
 
@@ -109,24 +155,34 @@ npm install
 ```
 
 3. **Set up environment variables:**
-```
-# Create a .env.local file with:
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
-```
-
-4. **Set up API keys:**
 Create a `.env.local` file in the root directory with the following content:
 ```
+# NextAuth Configuration
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_nextauth_secret_here
+
+# Database
+DATABASE_URL="file:./dev.db" # For SQLite
+
 # API Keys - Get your own keys from Google Maps and MapBox
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 NEXT_PUBLIC_MAPBOX_API_KEY=your_mapbox_api_key_here
+
+# Social Auth Providers (optional)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+LINKEDIN_CLIENT_ID=your_linkedin_client_id
+LINKEDIN_CLIENT_SECRET=your_linkedin_client_secret
 ```
 
-Important notes about API keys:
-- Never commit API keys to the repository
-- For Google Maps, get a key from the [Google Cloud Console](https://console.cloud.google.com/)
-- For MapBox, get a key from the [MapBox Developer Dashboard](https://account.mapbox.com/)
-- The application will not function correctly without valid API keys
+Important notes about environment variables:
+- Never commit API keys and secrets to the repository
+- For social authentication, get keys from respective provider developer consoles
+
+4. **Set up the database:**
+```bash
+npx prisma migrate dev
+```
 
 5. **Run the development server:**
 ```bash
@@ -134,6 +190,26 @@ npm run dev
 ```
 
 6. **Open your browser:** Navigate to [http://localhost:3000](http://localhost:3000)
+
+## WSL Development
+
+When developing in Windows Subsystem for Linux (WSL), use the provided helper scripts:
+
+```bash
+# Use the WSL development script
+./wsl-dev.sh
+
+# OR if you encounter issues
+node run-next-dev.js
+```
+
+## Authentication Development
+
+For development purposes, the authentication system can be bypassed:
+
+1. In middleware.ts, the `shouldCheckAuth` parameter controls authentication checks
+2. In development mode, you can add `?auth_check=true` to URLs to explicitly enable auth
+3. The onboarding layout includes a toggle to bypass authentication
 
 ## Usage Examples
 
@@ -192,16 +268,22 @@ const MyComponent = () => {
    - Set environment variables in your hosting platform for production
    - NEVER commit API keys to the repository
 
-2. **Error Handling**: The application includes robust error handling for API calls and user inputs.
+2. **Authentication Security:**
+   - JWT tokens are used for session management
+   - Passwords are hashed using bcrypt (when using credentials provider)
+   - Route protection with Next.js middleware
+   - CSRF protection built into NextAuth.js
 
-3. **Accessibility**: Components are designed with accessibility in mind, including keyboard navigation and screen reader support.
+3. **Error Handling**: The application includes robust error handling for API calls and user inputs.
+
+4. **Accessibility**: Components are designed with accessibility in mind, including keyboard navigation and screen reader support.
 
 ## Future Development
 
-- [ ] **User Authentication and Profiles**
-  - Campus student login integration
-  - Preference saving
-  - Event history
+- [ ] **Enhanced User Profiles**
+  - Profile completeness indicators
+  - Achievement badges
+  - Social connections
 
 - [ ] **Enhanced Event Data**
   - Adding more metadata to events
